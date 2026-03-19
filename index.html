@@ -1113,13 +1113,17 @@ function NthLayerSite() {
           }}>NthLayer</span>
         </div>
         <div style={{ display: "flex", gap: 28, alignItems: "center" }}>
-          {["Spec", "Layers", "Articles"].map((item) => (
-            <a key={item} href="#" style={{
+          {[
+            { label: "Spec", href: "https://github.com/rsionnach/opensrm" },
+            { label: "Layers", href: "#layers" },
+            { label: "Articles", href: "https://dev.to/rsionnach" },
+          ].map((item) => (
+            <a key={item.label} href={item.href} target={item.href.startsWith("http") ? "_blank" : undefined} rel={item.href.startsWith("http") ? "noopener" : undefined} style={{
               fontFamily: "'JetBrains Mono', monospace", fontSize: 12,
               color: "#9CA3AF", textDecoration: "none", letterSpacing: "0.03em",
-            }}>{item}</a>
+            }}>{item.label}</a>
           ))}
-          <a href="https://github.com/rsionnach/opensrm" target="_blank" rel="noopener" style={{
+          <a href="https://github.com/rsionnach" target="_blank" rel="noopener" style={{
             fontFamily: "'JetBrains Mono', monospace", fontSize: 12,
             color: "#F0F0F3", background: "rgba(240,240,243,0.08)", padding: "8px 16px",
             border: "1px solid rgba(240,240,243,0.15)",
@@ -1265,7 +1269,7 @@ function NthLayerSite() {
       <ScenarioAnimation />
 
       {/* Sticky lifecycle bar */}
-      <div id="lifecycle" style={{
+      <div id="layers" style={{
         position: "sticky", top: 64, zIndex: 50, padding: "16px 0",
         background: "rgba(11,17,32,0.9)", backdropFilter: "blur(12px)",
         borderBottom: "1px solid rgba(30,42,58,0.3)",
