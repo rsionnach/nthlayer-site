@@ -181,6 +181,8 @@ const PHASES = [
     desc: "29 services across 4 platforms. Monitoring generated from OpenSRM specs.",
     events: [], overrides: {},
     traceAI: false, traceInfra: false,
+    signals: [],
+    ecoActivate: [],
   },
   {
     name: "Bad Deploy", dur: 16000, label: "QUALITY DEGRADATION", color: "#b48ead",
@@ -190,6 +192,11 @@ const PHASES = [
     ],
     overrides: { "fraud-detect": 0.65 },
     traceAI: false, traceInfra: false,
+    signals: [
+      { from: "fraud-detect", to: "nthlayer-measure", color: "#b48ead", delay: 2000 },
+      { from: "nthlayer-measure", to: "nthlayer-learn", color: "#a3be8c", delay: 5000 },
+    ],
+    ecoActivate: ["nthlayer-measure", "nthlayer-learn"],
   },
   {
     name: "Dual Failure", dur: 20000, label: "CONCURRENT INCIDENTS", color: "#bf616a",
@@ -206,6 +213,14 @@ const PHASES = [
       "api-gateway": 0.68,
     },
     traceAI: true, traceInfra: true,
+    signals: [
+      { from: "fraud-detect", to: "nthlayer-correlate", color: "#ebcb8b", delay: 1000 },
+      { from: "payment-api", to: "nthlayer-correlate", color: "#ebcb8b", delay: 2500 },
+      { from: "config-service", to: "nthlayer-correlate", color: "#ebcb8b", delay: 4000 },
+      { from: "checkout-svc", to: "nthlayer-correlate", color: "#ebcb8b", delay: 5500 },
+      { from: "nthlayer-measure", to: "nthlayer-correlate", color: "#ebcb8b", delay: 7000 },
+    ],
+    ecoActivate: ["nthlayer-measure", "nthlayer-correlate", "nthlayer-learn"],
   },
   {
     name: "Correlation", dur: 20000, label: "TWO ROOT CAUSES IDENTIFIED", color: "#ebcb8b",
@@ -223,6 +238,14 @@ const PHASES = [
       "api-gateway": 0.68,
     },
     traceAI: true, traceInfra: true,
+    signals: [
+      { from: "nthlayer-correlate", to: "nthlayer-respond", color: "#bf616a", delay: 2000 },
+      { from: "nthlayer-respond", to: "fraud-detect", color: "#bf616a", delay: 5000 },
+      { from: "nthlayer-respond", to: "config-service", color: "#bf616a", delay: 6000 },
+      { from: "nthlayer-correlate", to: "nthlayer-learn", color: "#a3be8c", delay: 8000 },
+      { from: "nthlayer-respond", to: "nthlayer-learn", color: "#a3be8c", delay: 9000 },
+    ],
+    ecoActivate: ["nthlayer-measure", "nthlayer-correlate", "nthlayer-respond", "nthlayer-learn"],
   },
   {
     name: "Recovery", dur: 20000, label: "RECOVERED", color: "#a3be8c",
@@ -230,9 +253,17 @@ const PHASES = [
     events: [
       { text: "INC-4821 closed · quality signal preceded latency by 8m · ~340 decisions degraded · add judgment SLO gate to CI/CD", tag: "LEARN", src: "retro", color: "#a3be8c" },
       { text: "INC-4822 closed · config change → OOM in 22m · 5 services across 2 platforms · add memory limit to spec", tag: "LEARN", src: "retro", color: "#a3be8c" },
+      { text: "fraud-detect autonomy reduced: full → supervised · model v2.3 reversal rate exceeded judgment SLO · human approval required to restore", tag: "MEASURE", src: "governance", color: "#b48ead" },
     ],
     overrides: {},
     traceAI: false, traceInfra: false,
+    signals: [
+      { from: "nthlayer-measure", to: "fraud-detect", color: "#b48ead", delay: 3000, dashed: true },
+      { from: "nthlayer-measure", to: "nthlayer-learn", color: "#a3be8c", delay: 6000 },
+      { from: "nthlayer-correlate", to: "nthlayer-learn", color: "#a3be8c", delay: 7000 },
+      { from: "nthlayer-respond", to: "nthlayer-learn", color: "#a3be8c", delay: 8000 },
+    ],
+    ecoActivate: ["nthlayer-measure", "nthlayer-correlate", "nthlayer-respond", "nthlayer-learn"],
   },
 ];
 
@@ -266,6 +297,9 @@ function NthLayerViz() {
     traceAI: false, traceInfra: false,
     time: 0, pi: 0, pt: 0, playing: false,
     events: [], hovered: null,
+    ecoOpacity: Object.fromEntries(ECOSYSTEM.map(e => [e.id, 0.3])),
+    ecoTargetOpacity: Object.fromEntries(ECOSYSTEM.map(e => [e.id, 0.3])),
+    activeSignals: [],
   });
   const [phase, setPhase] = useState(0);
   const [playing, setPlaying] = useState(false);
