@@ -439,10 +439,10 @@ function NthLayerViz() {
       ctx.lineWidth = 0.5 * sc;
       ctx.stroke();
       // Region label
-      ctx.fillStyle = pc.label + "22";
-      ctx.font = `bold ${6 * sc}px 'JetBrains Mono',monospace`;
+      ctx.fillStyle = pc.label + "55";
+      ctx.font = `bold ${7 * sc}px 'JetBrains Mono',monospace`;
       ctx.textAlign = "left"; ctx.textBaseline = "top";
-      ctx.fillText(pc.name, rx + 4 * sc, ry + 3 * sc);
+      ctx.fillText(pc.name, rx + 5 * sc, ry + 4 * sc);
     });
 
     // Spec annotation (Phase 1 only, first 5s)
