@@ -485,16 +485,17 @@ function NthLayerViz() {
       ctx.stroke();
     });
 
-    // Particles — thin out on degraded edges to reduce visual noise
+    // Particles — fade out on degraded edges (lower opacity, not random skip)
     s.particles.forEach(p => {
       const e = EDGES[p.ei]; const f = pos(e.from), t = pos(e.to);
       const eh = Math.min(s.h[e.from], s.h[e.to]);
       p.t += (p.spd * (0.3 + eh * 0.7) * dt) / 3000; if (p.t > 1) p.t -= 1;
-      // Skip rendering most particles on degraded edges (fewer requests = fewer particles)
-      if (eh < 0.6 && Math.random() > eh) return;
       const x = cx + lerp(f.x, t.x, p.t) * sc, y = cy + lerp(f.y, t.y, p.t) * sc;
-      ctx.beginPath(); ctx.arc(x, y, p.sz * sc * 2, 0, 6.28); ctx.fillStyle = hRgba(eh, 0.08); ctx.fill();
-      ctx.beginPath(); ctx.arc(x, y, p.sz * sc, 0, 6.28); ctx.fillStyle = hRgb(eh); ctx.fill();
+      // Degraded edges: particles fade and shrink smoothly instead of disappearing
+      const pAlpha = eh < 0.6 ? eh * 0.8 : 1;
+      const pSize = eh < 0.6 ? p.sz * (0.4 + eh * 0.6) : p.sz;
+      ctx.beginPath(); ctx.arc(x, y, pSize * sc * 2, 0, 6.28); ctx.fillStyle = hRgba(eh, 0.08 * pAlpha); ctx.fill();
+      ctx.beginPath(); ctx.arc(x, y, pSize * sc, 0, 6.28); ctx.fillStyle = hRgba(eh, pAlpha); ctx.fill();
     });
 
     // Trace helper
