@@ -19,42 +19,42 @@ const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
 // ── Services across 4 platforms ──────────────────────────────────────────────
 const SERVICES = [
-  // ON-PREM / PRIVATE CLOUD — upper-left cluster
-  { id: "api-gateway", platform: "on-prem", domain: "platform", tier: "critical", type: "api", x: -60, y: -180 },
-  { id: "auth-service", platform: "on-prem", domain: "platform", tier: "critical", type: "api", x: -160, y: -140 },
-  { id: "user-service", platform: "on-prem", domain: "platform", tier: "critical", type: "api", x: -60, y: -100 },
-  { id: "config-service", platform: "on-prem", domain: "platform", tier: "standard", type: "api", x: 40, y: -140 },
-  { id: "notification-svc", platform: "on-prem", domain: "platform", tier: "standard", type: "api", x: 50, y: -80 },
-  { id: "profile-service", platform: "on-prem", domain: "platform", tier: "standard", type: "api", x: -170, y: -70 },
-  { id: "audit-service", platform: "on-prem", domain: "platform", tier: "standard", type: "worker", x: 50, y: -210 },
-  { id: "secrets-vault", platform: "on-prem", domain: "platform", tier: "critical", type: "api", x: -230, y: -160 },
+  // ON-PREM / PRIVATE CLOUD — upper-center cluster
+  { id: "api-gateway", platform: "on-prem", domain: "platform", tier: "critical", type: "api", x: 40, y: -180 },
+  { id: "auth-service", platform: "on-prem", domain: "platform", tier: "critical", type: "api", x: -60, y: -140 },
+  { id: "user-service", platform: "on-prem", domain: "platform", tier: "critical", type: "api", x: 40, y: -100 },
+  { id: "config-service", platform: "on-prem", domain: "platform", tier: "standard", type: "api", x: 140, y: -140 },
+  { id: "notification-svc", platform: "on-prem", domain: "platform", tier: "standard", type: "api", x: 150, y: -80 },
+  { id: "profile-service", platform: "on-prem", domain: "platform", tier: "standard", type: "api", x: -70, y: -70 },
+  { id: "audit-service", platform: "on-prem", domain: "platform", tier: "standard", type: "worker", x: 150, y: -210 },
+  { id: "secrets-vault", platform: "on-prem", domain: "platform", tier: "critical", type: "api", x: -130, y: -160 },
 
   // AWS — payments & orders — right cluster
-  { id: "payment-api", platform: "aws", domain: "payments", tier: "critical", type: "api", x: 200, y: -60 },
-  { id: "payment-proc", platform: "aws", domain: "payments", tier: "critical", type: "worker", x: 170, y: 20 },
-  { id: "checkout-svc", platform: "aws", domain: "orders", tier: "critical", type: "api", x: 280, y: -100 },
-  { id: "order-service", platform: "aws", domain: "orders", tier: "critical", type: "api", x: 320, y: -20 },
-  { id: "inventory-svc", platform: "aws", domain: "orders", tier: "standard", type: "api", x: 350, y: -120 },
-  { id: "shipping-svc", platform: "aws", domain: "orders", tier: "standard", type: "api", x: 370, y: 50 },
-  { id: "billing-svc", platform: "aws", domain: "payments", tier: "standard", type: "api", x: 240, y: 40 },
-  { id: "returns-svc", platform: "aws", domain: "orders", tier: "standard", type: "api", x: 390, y: -40 },
-  { id: "cache-cluster", platform: "aws", domain: "platform", tier: "standard", type: "api", x: 260, y: -170 },
+  { id: "payment-api", platform: "aws", domain: "payments", tier: "critical", type: "api", x: 300, y: -60 },
+  { id: "payment-proc", platform: "aws", domain: "payments", tier: "critical", type: "worker", x: 270, y: 20 },
+  { id: "checkout-svc", platform: "aws", domain: "orders", tier: "critical", type: "api", x: 380, y: -100 },
+  { id: "order-service", platform: "aws", domain: "orders", tier: "critical", type: "api", x: 420, y: -20 },
+  { id: "inventory-svc", platform: "aws", domain: "orders", tier: "standard", type: "api", x: 450, y: -120 },
+  { id: "shipping-svc", platform: "aws", domain: "orders", tier: "standard", type: "api", x: 470, y: 50 },
+  { id: "billing-svc", platform: "aws", domain: "payments", tier: "standard", type: "api", x: 340, y: 40 },
+  { id: "returns-svc", platform: "aws", domain: "orders", tier: "standard", type: "api", x: 490, y: -40 },
+  { id: "cache-cluster", platform: "aws", domain: "platform", tier: "standard", type: "api", x: 360, y: -170 },
 
-  // GCP — data & ML — lower-left cluster
-  { id: "fraud-detect", platform: "gcp", domain: "ml", tier: "critical", type: "ai-gate", x: -100, y: 60 },
-  { id: "rec-engine", platform: "gcp", domain: "ml", tier: "low", type: "ai-gate", x: 0, y: 120 },
-  { id: "content-mod", platform: "gcp", domain: "ml", tier: "standard", type: "ai-gate", x: -200, y: 120 },
-  { id: "analytics-api", platform: "gcp", domain: "data", tier: "low", type: "api", x: -280, y: 50 },
-  { id: "search-service", platform: "gcp", domain: "data", tier: "standard", type: "api", x: -120, y: 180 },
-  { id: "etl-pipeline", platform: "gcp", domain: "data", tier: "low", type: "worker", x: -300, y: 140 },
-  { id: "ml-pipeline", platform: "gcp", domain: "ml", tier: "standard", type: "worker", x: -220, y: 190 },
-  { id: "feature-store", platform: "gcp", domain: "data", tier: "standard", type: "api", x: -350, y: 100 },
+  // GCP — data & ML — lower-center cluster
+  { id: "fraud-detect", platform: "gcp", domain: "ml", tier: "critical", type: "ai-gate", x: 0, y: 60 },
+  { id: "rec-engine", platform: "gcp", domain: "ml", tier: "low", type: "ai-gate", x: 100, y: 120 },
+  { id: "content-mod", platform: "gcp", domain: "ml", tier: "standard", type: "ai-gate", x: -100, y: 120 },
+  { id: "analytics-api", platform: "gcp", domain: "data", tier: "low", type: "api", x: -180, y: 50 },
+  { id: "search-service", platform: "gcp", domain: "data", tier: "standard", type: "api", x: -20, y: 180 },
+  { id: "etl-pipeline", platform: "gcp", domain: "data", tier: "low", type: "worker", x: -200, y: 140 },
+  { id: "ml-pipeline", platform: "gcp", domain: "ml", tier: "standard", type: "worker", x: -120, y: 190 },
+  { id: "feature-store", platform: "gcp", domain: "data", tier: "standard", type: "api", x: -250, y: 100 },
 
   // EXTERNAL / SaaS — positioned near their dependents, not clustered
-  { id: "stripe-api", platform: "external", domain: "external", tier: "critical", type: "api", x: 180, y: 100 },
-  { id: "twilio-sms", platform: "external", domain: "external", tier: "standard", type: "api", x: 120, y: -30 },
-  { id: "auth0-idp", platform: "external", domain: "external", tier: "critical", type: "api", x: -300, y: -160 },
-  { id: "cdn-provider", platform: "external", domain: "external", tier: "standard", type: "api", x: 140, y: -210 },
+  { id: "stripe-api", platform: "external", domain: "external", tier: "critical", type: "api", x: 280, y: 100 },
+  { id: "twilio-sms", platform: "external", domain: "external", tier: "standard", type: "api", x: 220, y: -30 },
+  { id: "auth0-idp", platform: "external", domain: "external", tier: "critical", type: "api", x: -200, y: -160 },
+  { id: "cdn-provider", platform: "external", domain: "external", tier: "standard", type: "api", x: 240, y: -210 },
 ];
 
 const EDGES = [
@@ -131,10 +131,10 @@ const EDGES = [
 
 // ── NthLayer Ecosystem (running components) ─────────────────────────────────
 const ECOSYSTEM = [
-  { id: "nthlayer-measure",   shape: "diamond",  color: "#b48ead", label: "measure",   x: -60,  y: 290 },
-  { id: "nthlayer-correlate", shape: "diamond",  color: "#ebcb8b", label: "correlate", x: 30,   y: 280 },
-  { id: "nthlayer-respond",   shape: "diamond",  color: "#bf616a", label: "respond",   x: 120,  y: 290 },
-  { id: "nthlayer-learn",     shape: "cylinder", color: "#a3be8c", label: "learn",     x: 30,   y: 340 },
+  { id: "nthlayer-measure",   shape: "diamond",  color: "#b48ead", label: "measure",   x: -400, y: -80 },
+  { id: "nthlayer-correlate", shape: "diamond",  color: "#ebcb8b", label: "correlate", x: -340, y: 0 },
+  { id: "nthlayer-respond",   shape: "diamond",  color: "#bf616a", label: "respond",   x: -400, y: 80 },
+  { id: "nthlayer-learn",     shape: "cylinder", color: "#a3be8c", label: "learn",     x: -470, y: 0 },
 ];
 
 const ECO_EDGES = [
@@ -453,8 +453,8 @@ function NthLayerViz() {
       else if (annoT < 3.5) annoAlpha = 1;
       else if (annoT < 5) annoAlpha = 1 - (annoT - 3.5) / 1.5;
       if (annoAlpha > 0) {
-        const nthRegion = ECOSYSTEM[1];
-        const ax = cx + nthRegion.x * sc, ay = cy + (nthRegion.y - 45) * sc;
+        const nthRegion = ECOSYSTEM[1]; // correlate is center of NthLayer region
+        const ax = cx + (nthRegion.x + 60) * sc, ay = cy + (nthRegion.y - 70) * sc;
         ctx.globalAlpha = annoAlpha * 0.6;
         ctx.font = `${5.5 * sc}px 'JetBrains Mono',monospace`;
         ctx.textAlign = "center"; ctx.textBaseline = "middle";
