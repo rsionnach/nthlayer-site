@@ -449,6 +449,25 @@ function NthLayerViz() {
       ctx.fillText(pc.name, rx + 4 * sc, ry + 3 * sc);
     });
 
+    // Spec annotation (Phase 1 only, first 5s)
+    if (s.pi === 0 && s.playing) {
+      const annoT = s.pt / 1000;
+      let annoAlpha = 0;
+      if (annoT < 0.5) annoAlpha = annoT / 0.5;
+      else if (annoT < 3.5) annoAlpha = 1;
+      else if (annoT < 5) annoAlpha = 1 - (annoT - 3.5) / 1.5;
+      if (annoAlpha > 0) {
+        const nthRegion = ECOSYSTEM[1];
+        const ax = cx + nthRegion.x * sc, ay = cy + (nthRegion.y - 45) * sc;
+        ctx.globalAlpha = annoAlpha * 0.6;
+        ctx.font = `${5.5 * sc}px 'JetBrains Mono',monospace`;
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillStyle = ACCENT;
+        ctx.fillText("monitoring infrastructure generated from OpenSRM specs", ax, ay);
+        ctx.globalAlpha = 1;
+      }
+    }
+
     // Edges
     EDGES.forEach(e => {
       const f = pos(e.from), t = pos(e.to);
