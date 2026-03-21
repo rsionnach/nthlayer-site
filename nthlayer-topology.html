@@ -129,6 +129,22 @@ const EDGES = [
   { from: "cache-cluster", to: "config-service", critical: false },
 ];
 
+// ── NthLayer Ecosystem (running components) ─────────────────────────────────
+const ECOSYSTEM = [
+  { id: "nthlayer-measure",   shape: "diamond",  color: "#b48ead", label: "measure",   x: -60,  y: 290 },
+  { id: "nthlayer-correlate", shape: "diamond",  color: "#ebcb8b", label: "correlate", x: 30,   y: 280 },
+  { id: "nthlayer-respond",   shape: "diamond",  color: "#bf616a", label: "respond",   x: 120,  y: 290 },
+  { id: "nthlayer-learn",     shape: "cylinder", color: "#a3be8c", label: "learn",     x: 30,   y: 340 },
+];
+
+const ECO_EDGES = [
+  { from: "nthlayer-measure",   to: "nthlayer-learn" },
+  { from: "nthlayer-measure",   to: "nthlayer-respond" },   // governance
+  { from: "nthlayer-correlate", to: "nthlayer-learn" },
+  { from: "nthlayer-correlate", to: "nthlayer-respond" },
+  { from: "nthlayer-respond",   to: "nthlayer-learn" },
+];
+
 // ── Brand ────────────────────────────────────────────────────────────────────
 const BG = "#0B1120";
 const ACCENT = "#88c0d0";
@@ -145,6 +161,7 @@ const PLATFORM_COLORS = {
   "aws":     { bg: "rgba(235,203,139,0.03)", border: "rgba(235,203,139,0.10)", label: "#ebcb8b", name: "AWS" },
   "gcp":     { bg: "rgba(180,142,173,0.03)", border: "rgba(180,142,173,0.10)", label: "#b48ead", name: "GCP" },
   "external":{ bg: "rgba(163,190,140,0.03)", border: "rgba(163,190,140,0.08)", label: "#a3be8c", name: "EXTERNAL" },
+  "nthlayer":{ bg: "rgba(136,192,208,0.03)", border: "rgba(136,192,208,0.10)", label: "#88c0d0", name: "NTHLAYER" },
 };
 
 const DOMAIN_COLORS = {
