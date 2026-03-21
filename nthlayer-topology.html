@@ -385,22 +385,40 @@ function NthLayerViz() {
     bg.addColorStop(0, "#0f1626"); bg.addColorStop(1, BG);
     ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
 
-    // Platform region labels (very subtle)
-    const platformPositions = {
-      "on-prem": { x: -60, y: -170, label: "ON-PREM" },
-      "aws": { x: 255, y: -100, label: "AWS" },
-      "gcp": { x: -195, y: 65, label: "GCP" },
-      "external": { x: -280, y: -170, label: "EXT" },
-    };
-    Object.entries(platformPositions).forEach(([plat, p]) => {
+    // Platform region boundaries
+    const platformGroups = { "on-prem": [], "aws": [], "gcp": [], "external": [] };
+    SERVICES.forEach(sv => platformGroups[sv.platform].push(sv));
+    platformGroups["nthlayer"] = ECOSYSTEM;
+
+    Object.entries(platformGroups).forEach(([plat, nodes]) => {
+      if (!nodes.length) return;
       const pc = PLATFORM_COLORS[plat];
-      ctx.fillStyle = pc.label.replace(")", ",0.12)").replace("rgb", "rgba");
-      ctx.font = `bold ${5.5 * sc}px 'JetBrains Mono',monospace`;
-      ctx.textAlign = "left";
-      ctx.textBaseline = "top";
-      const lx = cx + p.x * sc, ly = cy + p.y * sc;
-      ctx.fillStyle = pc.label + "18";
-      ctx.fillText(p.label, lx, ly);
+      const pad = 30 * sc;
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      nodes.forEach(n => {
+        const nx = cx + n.x * sc, ny = cy + n.y * sc;
+        if (nx < minX) minX = nx; if (ny < minY) minY = ny;
+        if (nx > maxX) maxX = nx; if (ny > maxY) maxY = ny;
+      });
+      const rx = minX - pad, ry = minY - pad, rw = maxX - minX + pad * 2, rh = maxY - minY + pad * 2;
+      const radius = 8 * sc;
+      ctx.beginPath();
+      ctx.moveTo(rx + radius, ry);
+      ctx.lineTo(rx + rw - radius, ry); ctx.arcTo(rx + rw, ry, rx + rw, ry + radius, radius);
+      ctx.lineTo(rx + rw, ry + rh - radius); ctx.arcTo(rx + rw, ry + rh, rx + rw - radius, ry + rh, radius);
+      ctx.lineTo(rx + radius, ry + rh); ctx.arcTo(rx, ry + rh, rx, ry + rh - radius, radius);
+      ctx.lineTo(rx, ry + radius); ctx.arcTo(rx, ry, rx + radius, ry, radius);
+      ctx.closePath();
+      ctx.fillStyle = pc.bg;
+      ctx.fill();
+      ctx.strokeStyle = pc.border;
+      ctx.lineWidth = 0.5 * sc;
+      ctx.stroke();
+      // Region label
+      ctx.fillStyle = pc.label + "22";
+      ctx.font = `bold ${6 * sc}px 'JetBrains Mono',monospace`;
+      ctx.textAlign = "left"; ctx.textBaseline = "top";
+      ctx.fillText(pc.name, rx + 4 * sc, ry + 3 * sc);
     });
 
     // Edges
