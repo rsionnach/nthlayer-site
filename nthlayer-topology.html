@@ -347,7 +347,11 @@ function NthLayerViz() {
     return paths;
   }, []);
 
-  const pos = useCallback(id => SERVICES.find(s => s.id === id) || { x: 0, y: 0 }, []);
+  const pos = useCallback(id => {
+    const svc = SERVICES.find(s => s.id === id);
+    if (svc) return svc;
+    return ECOSYSTEM.find(e => e.id === id) || { x: 0, y: 0 };
+  }, []);
 
   const animate = useCallback(ts => {
     const c = canvasRef.current; if (!c) return;
@@ -379,6 +383,9 @@ function NthLayerViz() {
     }
 
     SERVICES.forEach(sv => { s.h[sv.id] = lerp(s.h[sv.id], s.ht[sv.id], 0.0025 * dt); });
+    ECOSYSTEM.forEach(en => {
+      s.ecoOpacity[en.id] = lerp(s.ecoOpacity[en.id], s.ecoTargetOpacity[en.id], 0.003 * dt);
+    });
 
     ctx.clearRect(0, 0, W, H);
     const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(W, H) * 0.7);
@@ -428,6 +435,18 @@ function NthLayerViz() {
       ctx.beginPath(); ctx.moveTo(cx + f.x * sc, cy + f.y * sc); ctx.lineTo(cx + t.x * sc, cy + t.y * sc);
       ctx.strokeStyle = hRgba(eh, e.critical ? 0.16 : 0.05);
       ctx.lineWidth = (e.critical ? 0.8 : 0.4) * sc; ctx.stroke();
+    });
+
+    // Ecosystem inter-component edges
+    ECO_EDGES.forEach(e => {
+      const f = pos(e.from), t = pos(e.to);
+      const opacity = Math.min(s.ecoOpacity[e.from], s.ecoOpacity[e.to]);
+      ctx.beginPath();
+      ctx.moveTo(cx + f.x * sc, cy + f.y * sc);
+      ctx.lineTo(cx + t.x * sc, cy + t.y * sc);
+      ctx.strokeStyle = `rgba(136,192,208,${0.12 * opacity})`;
+      ctx.lineWidth = 0.6 * sc;
+      ctx.stroke();
     });
 
     // Particles
@@ -522,6 +541,73 @@ function NthLayerViz() {
       ctx.fillText(label, x, ly);
     });
 
+    // Ecosystem nodes
+    ECOSYSTEM.forEach(en => {
+      const x = cx + en.x * sc, y = cy + en.y * sc;
+      const r = TIER_R.standard * sc;
+      const opacity = s.ecoOpacity[en.id];
+      const dx = mouse.current.x - x, dy = mouse.current.y - y;
+      const isH = dx * dx + dy * dy < (r + 8) * (r + 8);
+      if (isH) curH = en.id;
+
+      ctx.globalAlpha = opacity;
+
+      // Glow when active
+      if (opacity > 0.6) {
+        ctx.beginPath(); ctx.arc(x, y, r + 6 * sc, 0, 6.28);
+        ctx.fillStyle = en.color + "15";
+        ctx.fill();
+      }
+
+      if (en.shape === "diamond") {
+        // Rotated square
+        const ng = ctx.createRadialGradient(x, y - r * 0.2, 0, x, y, r);
+        ng.addColorStop(0, en.color + "40"); ng.addColorStop(1, en.color + "0a");
+        ctx.beginPath();
+        ctx.moveTo(x, y - r); ctx.lineTo(x + r, y); ctx.lineTo(x, y + r); ctx.lineTo(x - r, y);
+        ctx.closePath();
+        ctx.fillStyle = ng; ctx.fill();
+        ctx.strokeStyle = en.color + (isH ? "cc" : "66");
+        ctx.lineWidth = (isH ? 1.2 : 0.7) * sc; ctx.stroke();
+      } else {
+        // Cylinder (database)
+        const cw = r * 1.2, ch = r * 1.6, ey = ch * 0.25;
+        const ng = ctx.createRadialGradient(x, y, 0, x, y, r);
+        ng.addColorStop(0, en.color + "40"); ng.addColorStop(1, en.color + "0a");
+        // Body
+        ctx.beginPath();
+        ctx.moveTo(x - cw, y - ch / 2 + ey); ctx.lineTo(x - cw, y + ch / 2 - ey);
+        ctx.quadraticCurveTo(x - cw, y + ch / 2 + ey, x, y + ch / 2 + ey);
+        ctx.quadraticCurveTo(x + cw, y + ch / 2 + ey, x + cw, y + ch / 2 - ey);
+        ctx.lineTo(x + cw, y - ch / 2 + ey);
+        ctx.quadraticCurveTo(x + cw, y - ch / 2 - ey, x, y - ch / 2 - ey);
+        ctx.quadraticCurveTo(x - cw, y - ch / 2 - ey, x - cw, y - ch / 2 + ey);
+        ctx.closePath();
+        ctx.fillStyle = ng; ctx.fill();
+        ctx.strokeStyle = en.color + (isH ? "cc" : "66");
+        ctx.lineWidth = (isH ? 1.2 : 0.7) * sc; ctx.stroke();
+        // Top ellipse
+        ctx.beginPath();
+        ctx.ellipse(x, y - ch / 2 + ey, cw, ey, 0, 0, 6.28);
+        ctx.strokeStyle = en.color + (isH ? "cc" : "44");
+        ctx.lineWidth = 0.5 * sc; ctx.stroke();
+      }
+
+      // Label — brand colour
+      const label = en.label;
+      const fontSize = (isH ? 7.5 : 7) * sc;
+      ctx.font = `${isH ? "bold " : ""}${fontSize}px 'JetBrains Mono',monospace`;
+      ctx.textAlign = "center"; ctx.textBaseline = "top";
+      const ly = y + r + 4 * sc;
+      const tw = ctx.measureText(label).width;
+      ctx.fillStyle = "rgba(11,17,32,0.75)";
+      ctx.fillRect(x - tw / 2 - 2, ly - 1, tw + 4, fontSize + 2);
+      ctx.fillStyle = en.color + (isH ? "ff" : "aa");
+      ctx.fillText(label, x, ly);
+
+      ctx.globalAlpha = 1;
+    });
+
     if (curH !== s.hovered) { s.hovered = curH; setHovered(curH); }
     frame.current = requestAnimationFrame(animate);
   }, [tracePathsAI, tracePathsInfra, pos]);
@@ -563,6 +649,7 @@ function NthLayerViz() {
 
   const cp = PHASES[phase];
   const hovSvc = hovered ? SERVICES.find(s => s.id === hovered) : null;
+  const hovEco = hovered ? ECOSYSTEM.find(e => e.id === hovered) : null;
   const hovH = hovered ? st.current.h[hovered] : 1;
   const FONT = "'JetBrains Mono',monospace";
 
@@ -632,19 +719,32 @@ function NthLayerViz() {
       )}
 
       {/* Hover */}
-      {hovSvc && (
+      {(hovSvc || hovEco) && (
         <div style={{ position: "absolute", bottom: 42, right: 12, zIndex: 10, background: "rgba(11,17,32,0.9)", border: `1px solid ${BORDER}`, borderRadius: 5, padding: "5px 9px", minWidth: 105, backdropFilter: "blur(6px)" }}>
-          <div style={{ color: TEXT1, fontSize: 8.5, fontWeight: 600, marginBottom: 3 }}>{hovSvc.id}</div>
-          {[["PLATFORM", hovSvc.platform], ["TIER", hovSvc.tier], ["TYPE", hovSvc.type]].map(([k, v]) => (
-            <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
-              <span style={{ color: TEXT3, fontSize: 6.5 }}>{k}</span>
-              <span style={{ color: TEXT4, fontSize: 6.5 }}>{v}</span>
-            </div>
-          ))}
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
-            <span style={{ color: TEXT3, fontSize: 6.5 }}>HEALTH</span>
-            <span style={{ color: hRgb(hovH), fontSize: 6.5 }}>{(hovH * 100).toFixed(1)}%</span>
-          </div>
+          <div style={{ color: TEXT1, fontSize: 8.5, fontWeight: 600, marginBottom: 3 }}>{hovSvc ? hovSvc.id : hovEco.id}</div>
+          {hovSvc ? (
+            <>
+              {[["PLATFORM", hovSvc.platform], ["TIER", hovSvc.tier], ["TYPE", hovSvc.type]].map(([k, v]) => (
+                <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+                  <span style={{ color: TEXT3, fontSize: 6.5 }}>{k}</span>
+                  <span style={{ color: TEXT4, fontSize: 6.5 }}>{v}</span>
+                </div>
+              ))}
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+                <span style={{ color: TEXT3, fontSize: 6.5 }}>HEALTH</span>
+                <span style={{ color: hRgb(hovH), fontSize: 6.5 }}>{(hovH * 100).toFixed(1)}%</span>
+              </div>
+            </>
+          ) : (
+            <>
+              {[["COMPONENT", hovEco.label], ["SHAPE", hovEco.shape], ["ROLE", hovEco.shape === "cylinder" ? "data store" : "agent"]].map(([k, v]) => (
+                <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+                  <span style={{ color: TEXT3, fontSize: 6.5 }}>{k}</span>
+                  <span style={{ color: hovEco.color, fontSize: 6.5 }}>{v}</span>
+                </div>
+              ))}
+            </>
+          )}
         </div>
       )}
 
