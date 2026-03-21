@@ -374,11 +374,32 @@ function NthLayerViz() {
           Object.entries(np.overrides).forEach(([id, v]) => { s.ht[id] = v; });
           s.traceAI = !!np.traceAI; s.traceInfra = !!np.traceInfra;
           s.traceAI_P = []; s.traceInfra_P = [];
+          // Set ecosystem opacity targets
+          ECOSYSTEM.forEach(en => { s.ecoTargetOpacity[en.id] = 0.3; });
+          (np.ecoActivate || []).forEach(id => { s.ecoTargetOpacity[id] = 1.0; });
+          // Queue signal lines
+          s.pendingSignals = (np.signals || []).map(sig => ({ ...sig, fired: false }));
           if (np.events.length) {
             s.events = [...s.events, ...np.events].slice(-3);
             setEvents([...s.events]);
           }
         } else { s.playing = false; setPlaying(false); }
+      }
+      // Fire pending signals based on phase elapsed time
+      if (s.pendingSignals) {
+        s.pendingSignals.forEach(sig => {
+          if (!sig.fired && s.pt >= (sig.delay || 0)) {
+            sig.fired = true;
+            const f = pos(sig.from), t = pos(sig.to);
+            s.activeSignals.push({
+              fromX: cx + f.x * sc, fromY: cy + f.y * sc,
+              toX: cx + t.x * sc, toY: cy + t.y * sc,
+              color: sig.color, dashed: !!sig.dashed,
+              t: 0, spd: 0.4, fadeT: 0, alive: true,
+              toId: sig.to,
+            });
+          }
+        });
       }
     }
 
@@ -483,6 +504,42 @@ function NthLayerViz() {
 
     if (s.traceAI) drawTrace(tracePathsAI, s.traceAI_P, INC_AI);
     if (s.traceInfra) drawTrace(tracePathsInfra, s.traceInfra_P, INC_INFRA);
+
+    // Active signal lines
+    for (let i = s.activeSignals.length - 1; i >= 0; i--) {
+      const sig = s.activeSignals[i];
+      if (sig.t < 1) {
+        sig.t += (sig.spd * dt) / 2000;
+        const px = lerp(sig.fromX, sig.toX, sig.t);
+        const py = lerp(sig.fromY, sig.toY, sig.t);
+        ctx.beginPath(); ctx.moveTo(sig.fromX, sig.fromY); ctx.lineTo(px, py);
+        ctx.strokeStyle = sig.color + "55";
+        ctx.lineWidth = 1.6 * sc;
+        if (sig.dashed) { ctx.setLineDash([4 * sc, 3 * sc]); }
+        ctx.stroke();
+        if (sig.dashed) { ctx.setLineDash([]); }
+        ctx.beginPath(); ctx.arc(px, py, 4 * sc, 0, 6.28);
+        ctx.fillStyle = sig.color + "20"; ctx.fill();
+        ctx.beginPath(); ctx.arc(px, py, 2 * sc, 0, 6.28);
+        ctx.fillStyle = sig.color + "cc"; ctx.fill();
+      } else if (sig.fadeT < 2500) {
+        sig.fadeT += dt;
+        const fadeAlpha = Math.max(0, 1 - sig.fadeT / 2500);
+        const alphaHex = Math.round(fadeAlpha * 0x55).toString(16).padStart(2, "0");
+        ctx.beginPath(); ctx.moveTo(sig.fromX, sig.fromY); ctx.lineTo(sig.toX, sig.toY);
+        ctx.strokeStyle = sig.color + alphaHex;
+        ctx.lineWidth = 1.6 * sc;
+        if (sig.dashed) { ctx.setLineDash([4 * sc, 3 * sc]); }
+        ctx.stroke();
+        if (sig.dashed) { ctx.setLineDash([]); }
+        if (sig.fadeT < dt * 2) {
+          const eNode = ECOSYSTEM.find(e => e.id === sig.toId);
+          if (eNode) s.ecoTargetOpacity[eNode.id] = 1.0;
+        }
+      } else {
+        s.activeSignals.splice(i, 1);
+      }
+    }
 
     // Nodes
     let curH = null;
@@ -637,6 +694,8 @@ function NthLayerViz() {
     s2.traceAI = false; s2.traceInfra = false; s2.traceAI_P = []; s2.traceInfra_P = [];
     lt.current = null;
     SERVICES.forEach(sv => { s2.h[sv.id] = 1; s2.ht[sv.id] = 1; });
+    ECOSYSTEM.forEach(en => { s2.ecoOpacity[en.id] = 0.3; s2.ecoTargetOpacity[en.id] = 0.3; });
+    s2.activeSignals = []; s2.pendingSignals = [];
     setPhase(0); setEvents([]); setStarted(true); setPlaying(true);
   }, []);
 
