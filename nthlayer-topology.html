@@ -19,42 +19,42 @@ const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
 // ── Services across 4 platforms ──────────────────────────────────────────────
 const SERVICES = [
-  // ON-PREM / PRIVATE CLOUD — core platform (left-center)
-  { id: "api-gateway", platform: "on-prem", domain: "platform", tier: "critical", type: "api", x: -30, y: -185 },
-  { id: "auth-service", platform: "on-prem", domain: "platform", tier: "critical", type: "api", x: -130, y: -120 },
-  { id: "user-service", platform: "on-prem", domain: "platform", tier: "critical", type: "api", x: -60, y: -60 },
-  { id: "config-service", platform: "on-prem", domain: "platform", tier: "standard", type: "api", x: 60, y: -130 },
-  { id: "notification-svc", platform: "on-prem", domain: "platform", tier: "standard", type: "api", x: 80, y: -60 },
-  { id: "profile-service", platform: "on-prem", domain: "platform", tier: "standard", type: "api", x: -190, y: -55 },
-  { id: "audit-service", platform: "on-prem", domain: "platform", tier: "standard", type: "worker", x: 155, y: -130 },
-  { id: "secrets-vault", platform: "on-prem", domain: "platform", tier: "critical", type: "api", x: -195, y: -150 },
+  // ON-PREM / PRIVATE CLOUD — upper-left cluster
+  { id: "api-gateway", platform: "on-prem", domain: "platform", tier: "critical", type: "api", x: -60, y: -180 },
+  { id: "auth-service", platform: "on-prem", domain: "platform", tier: "critical", type: "api", x: -160, y: -140 },
+  { id: "user-service", platform: "on-prem", domain: "platform", tier: "critical", type: "api", x: -60, y: -100 },
+  { id: "config-service", platform: "on-prem", domain: "platform", tier: "standard", type: "api", x: 40, y: -140 },
+  { id: "notification-svc", platform: "on-prem", domain: "platform", tier: "standard", type: "api", x: 50, y: -80 },
+  { id: "profile-service", platform: "on-prem", domain: "platform", tier: "standard", type: "api", x: -170, y: -70 },
+  { id: "audit-service", platform: "on-prem", domain: "platform", tier: "standard", type: "worker", x: 50, y: -210 },
+  { id: "secrets-vault", platform: "on-prem", domain: "platform", tier: "critical", type: "api", x: -230, y: -160 },
 
-  // AWS — payments & orders (right side)
-  { id: "payment-api", platform: "aws", domain: "payments", tier: "critical", type: "api", x: 155, y: 20 },
-  { id: "payment-proc", platform: "aws", domain: "payments", tier: "critical", type: "worker", x: 95, y: 90 },
-  { id: "checkout-svc", platform: "aws", domain: "orders", tier: "critical", type: "api", x: 230, y: -30 },
-  { id: "order-service", platform: "aws", domain: "orders", tier: "critical", type: "api", x: 275, y: 50 },
-  { id: "inventory-svc", platform: "aws", domain: "orders", tier: "standard", type: "api", x: 310, y: -50 },
-  { id: "shipping-svc", platform: "aws", domain: "orders", tier: "standard", type: "api", x: 340, y: 110 },
-  { id: "billing-svc", platform: "aws", domain: "payments", tier: "standard", type: "api", x: 195, y: 100 },
-  { id: "returns-svc", platform: "aws", domain: "orders", tier: "standard", type: "api", x: 350, y: 30 },
-  { id: "cache-cluster", platform: "aws", domain: "platform", tier: "standard", type: "api", x: 240, y: -110 },
+  // AWS — payments & orders — right cluster
+  { id: "payment-api", platform: "aws", domain: "payments", tier: "critical", type: "api", x: 200, y: -60 },
+  { id: "payment-proc", platform: "aws", domain: "payments", tier: "critical", type: "worker", x: 170, y: 20 },
+  { id: "checkout-svc", platform: "aws", domain: "orders", tier: "critical", type: "api", x: 280, y: -100 },
+  { id: "order-service", platform: "aws", domain: "orders", tier: "critical", type: "api", x: 320, y: -20 },
+  { id: "inventory-svc", platform: "aws", domain: "orders", tier: "standard", type: "api", x: 350, y: -120 },
+  { id: "shipping-svc", platform: "aws", domain: "orders", tier: "standard", type: "api", x: 370, y: 50 },
+  { id: "billing-svc", platform: "aws", domain: "payments", tier: "standard", type: "api", x: 240, y: 40 },
+  { id: "returns-svc", platform: "aws", domain: "orders", tier: "standard", type: "api", x: 390, y: -40 },
+  { id: "cache-cluster", platform: "aws", domain: "platform", tier: "standard", type: "api", x: 260, y: -170 },
 
-  // GCP — data & ML (bottom-left)
-  { id: "fraud-detect", platform: "gcp", domain: "ml", tier: "critical", type: "ai-gate", x: -80, y: 80 },
-  { id: "rec-engine", platform: "gcp", domain: "ml", tier: "low", type: "ai-gate", x: 20, y: 140 },
-  { id: "content-mod", platform: "gcp", domain: "ml", tier: "standard", type: "ai-gate", x: -170, y: 140 },
-  { id: "analytics-api", platform: "gcp", domain: "data", tier: "low", type: "api", x: -260, y: 80 },
-  { id: "search-service", platform: "gcp", domain: "data", tier: "standard", type: "api", x: -110, y: 200 },
-  { id: "etl-pipeline", platform: "gcp", domain: "data", tier: "low", type: "worker", x: -280, y: 170 },
-  { id: "ml-pipeline", platform: "gcp", domain: "ml", tier: "standard", type: "worker", x: -200, y: 210 },
-  { id: "feature-store", platform: "gcp", domain: "data", tier: "standard", type: "api", x: -330, y: 120 },
+  // GCP — data & ML — lower-left cluster
+  { id: "fraud-detect", platform: "gcp", domain: "ml", tier: "critical", type: "ai-gate", x: -100, y: 60 },
+  { id: "rec-engine", platform: "gcp", domain: "ml", tier: "low", type: "ai-gate", x: 0, y: 120 },
+  { id: "content-mod", platform: "gcp", domain: "ml", tier: "standard", type: "ai-gate", x: -200, y: 120 },
+  { id: "analytics-api", platform: "gcp", domain: "data", tier: "low", type: "api", x: -280, y: 50 },
+  { id: "search-service", platform: "gcp", domain: "data", tier: "standard", type: "api", x: -120, y: 180 },
+  { id: "etl-pipeline", platform: "gcp", domain: "data", tier: "low", type: "worker", x: -300, y: 140 },
+  { id: "ml-pipeline", platform: "gcp", domain: "ml", tier: "standard", type: "worker", x: -220, y: 190 },
+  { id: "feature-store", platform: "gcp", domain: "data", tier: "standard", type: "api", x: -350, y: 100 },
 
-  // EXTERNAL / SaaS (far edges)
-  { id: "stripe-api", platform: "external", domain: "external", tier: "critical", type: "api", x: 120, y: 185 },
-  { id: "twilio-sms", platform: "external", domain: "external", tier: "standard", type: "api", x: 175, y: 170 },
-  { id: "auth0-idp", platform: "external", domain: "external", tier: "critical", type: "api", x: -275, y: -140 },
-  { id: "cdn-provider", platform: "external", domain: "external", tier: "standard", type: "api", x: 180, y: -185 },
+  // EXTERNAL / SaaS — positioned near their dependents, not clustered
+  { id: "stripe-api", platform: "external", domain: "external", tier: "critical", type: "api", x: 180, y: 100 },
+  { id: "twilio-sms", platform: "external", domain: "external", tier: "standard", type: "api", x: 120, y: -30 },
+  { id: "auth0-idp", platform: "external", domain: "external", tier: "critical", type: "api", x: -300, y: -160 },
+  { id: "cdn-provider", platform: "external", domain: "external", tier: "standard", type: "api", x: 140, y: -210 },
 ];
 
 const EDGES = [
@@ -410,8 +410,8 @@ function NthLayerViz() {
     ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
 
     // Platform region boundaries
-    const platformGroups = { "on-prem": [], "aws": [], "gcp": [], "external": [] };
-    SERVICES.forEach(sv => platformGroups[sv.platform].push(sv));
+    const platformGroups = { "on-prem": [], "aws": [], "gcp": [] };
+    SERVICES.forEach(sv => { if (sv.platform !== "external") platformGroups[sv.platform].push(sv); });
     platformGroups["nthlayer"] = ECOSYSTEM;
 
     Object.entries(platformGroups).forEach(([plat, nodes]) => {
@@ -603,12 +603,16 @@ function NthLayerViz() {
         ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("AI", bx, by + 0.3 * sc);
       }
 
-      // Platform badge
-      const pc = PLATFORM_COLORS[sv.platform];
+      // External badge
       if (sv.platform === "external") {
-        const bx = x - r * 0.6, by = y - r * 0.6;
-        ctx.beginPath(); ctx.arc(bx, by, 2.5 * sc, 0, 6.28);
-        ctx.fillStyle = pc.label + "55"; ctx.fill();
+        const bx = x - r * 0.8, by = y - r * 0.8;
+        ctx.font = `bold ${4.5 * sc}px 'JetBrains Mono',monospace`;
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        const tw = ctx.measureText("EXT").width;
+        ctx.fillStyle = "rgba(11,17,32,0.8)";
+        ctx.fillRect(bx - tw / 2 - 2 * sc, by - 3 * sc, tw + 4 * sc, 6 * sc);
+        ctx.fillStyle = "#a3be8c88";
+        ctx.fillText("EXT", bx, by);
       }
 
       // LABEL — key fix: larger, high contrast, with dark background
