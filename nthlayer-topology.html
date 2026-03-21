@@ -591,10 +591,16 @@ function NthLayerViz() {
 
       // AI badge
       if (sv.type === "ai-gate") {
-        const bx = x + r * 0.6, by = y - r * 0.6;
-        ctx.beginPath(); ctx.arc(bx, by, 3 * sc, 0, 6.28); ctx.fillStyle = "#ebcb8b"; ctx.fill();
-        ctx.fillStyle = BG; ctx.font = `bold ${4 * sc}px 'JetBrains Mono',monospace`;
-        ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("AI", bx, by + 0.3);
+        const bx = x + r * 0.7, by = y - r * 0.7;
+        // Glow
+        ctx.beginPath(); ctx.arc(bx, by, 5.5 * sc, 0, 6.28);
+        ctx.fillStyle = "rgba(235,203,139,0.12)"; ctx.fill();
+        // Badge background
+        ctx.beginPath(); ctx.arc(bx, by, 4 * sc, 0, 6.28);
+        ctx.fillStyle = "#ebcb8b"; ctx.fill();
+        // Text
+        ctx.fillStyle = BG; ctx.font = `bold ${5 * sc}px 'JetBrains Mono',monospace`;
+        ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("AI", bx, by + 0.3 * sc);
       }
 
       // Platform badge
