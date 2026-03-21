@@ -214,11 +214,9 @@ const PHASES = [
     },
     traceAI: true, traceInfra: true,
     signals: [
-      { from: "fraud-detect", to: "nthlayer-correlate", color: "#ebcb8b", delay: 1000 },
-      { from: "payment-api", to: "nthlayer-correlate", color: "#ebcb8b", delay: 2500 },
-      { from: "config-service", to: "nthlayer-correlate", color: "#ebcb8b", delay: 4000 },
-      { from: "checkout-svc", to: "nthlayer-correlate", color: "#ebcb8b", delay: 5500 },
-      { from: "nthlayer-measure", to: "nthlayer-correlate", color: "#ebcb8b", delay: 7000 },
+      { from: "fraud-detect", to: "nthlayer-correlate", color: "#ebcb8b", delay: 2000 },
+      { from: "config-service", to: "nthlayer-correlate", color: "#ebcb8b", delay: 6000 },
+      { from: "nthlayer-measure", to: "nthlayer-correlate", color: "#ebcb8b", delay: 10000 },
     ],
     ecoActivate: ["nthlayer-measure", "nthlayer-correlate", "nthlayer-learn"],
   },
@@ -239,11 +237,9 @@ const PHASES = [
     },
     traceAI: true, traceInfra: true,
     signals: [
-      { from: "nthlayer-correlate", to: "nthlayer-respond", color: "#bf616a", delay: 2000 },
-      { from: "nthlayer-respond", to: "fraud-detect", color: "#bf616a", delay: 5000 },
-      { from: "nthlayer-respond", to: "config-service", color: "#bf616a", delay: 6000 },
-      { from: "nthlayer-correlate", to: "nthlayer-learn", color: "#a3be8c", delay: 8000 },
-      { from: "nthlayer-respond", to: "nthlayer-learn", color: "#a3be8c", delay: 9000 },
+      { from: "nthlayer-correlate", to: "nthlayer-respond", color: "#bf616a", delay: 3000 },
+      { from: "nthlayer-respond", to: "fraud-detect", color: "#bf616a", delay: 7000 },
+      { from: "nthlayer-respond", to: "config-service", color: "#bf616a", delay: 10000 },
     ],
     ecoActivate: ["nthlayer-measure", "nthlayer-correlate", "nthlayer-respond", "nthlayer-learn"],
   },
@@ -489,11 +485,13 @@ function NthLayerViz() {
       ctx.stroke();
     });
 
-    // Particles
+    // Particles — thin out on degraded edges to reduce visual noise
     s.particles.forEach(p => {
       const e = EDGES[p.ei]; const f = pos(e.from), t = pos(e.to);
       const eh = Math.min(s.h[e.from], s.h[e.to]);
       p.t += (p.spd * (0.3 + eh * 0.7) * dt) / 3000; if (p.t > 1) p.t -= 1;
+      // Skip rendering most particles on degraded edges (fewer requests = fewer particles)
+      if (eh < 0.6 && Math.random() > eh) return;
       const x = cx + lerp(f.x, t.x, p.t) * sc, y = cy + lerp(f.y, t.y, p.t) * sc;
       ctx.beginPath(); ctx.arc(x, y, p.sz * sc * 2, 0, 6.28); ctx.fillStyle = hRgba(eh, 0.08); ctx.fill();
       ctx.beginPath(); ctx.arc(x, y, p.sz * sc, 0, 6.28); ctx.fillStyle = hRgb(eh); ctx.fill();
