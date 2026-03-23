@@ -58,7 +58,7 @@ dependencies:
   {
     id: "generate",
     label: "GENERATE",
-    name: "Generation",
+    name: "Generate",
     color: "#5e81ac",
     desc: "Manifests forged into monitoring infrastructure",
     detail: "Reads your manifest and produces everything: Prometheus recording rules, Grafana dashboards, alerting rules, and deploy gates. Including judgment SLO error budget rules that block deploys when AI quality degrades.",
@@ -82,7 +82,7 @@ $ nthlayer check-deploy --service loan-approval-agent
   {
     id: "measure",
     label: "MEASURE",
-    name: "Measurement",
+    name: "Measure",
     color: "#b48ead",
     desc: "Quality evaluation and autonomy governance",
     detail: "Point it at any AI agent. It evaluates output quality via adapters (push or pull), tracks confidence scores, detects drift, and emits OTel metrics that flow to Prometheus. When quality drops below your judgment SLO threshold, it automatically reduces agent autonomy — forcing human review until trust is re-established. Autonomy can only be restored by a human. The ratchet only tightens.",
@@ -107,7 +107,7 @@ gen_ai_override_reversal_total{
   {
     id: "correlate",
     label: "CORRELATE",
-    name: "Correlation",
+    name: "Correlate",
     color: "#ebcb8b",
     desc: "Signal correlation at enterprise scale",
     detail: "Ingests signals from everywhere — quality metrics from Prometheus, deploy events, dependency health — and correlates them in real time. When a deploy causes judgment quality to drop, it connects the dots before you do.",
@@ -129,7 +129,7 @@ gen_ai_override_reversal_total{
   {
     id: "respond",
     label: "RESPOND",
-    name: "Response",
+    name: "Respond",
     color: "#bf616a",
     desc: "AI-coordinated incident response",
     detail: "When a critical signal is detected, it coordinates the response: triage agents assess severity, investigation agents identify root cause, remediation agents propose and execute fixes. Humans stay in the loop for decisions that matter.",
@@ -153,7 +153,7 @@ gen_ai_override_reversal_total{
   {
     id: "learn",
     label: "LEARN",
-    name: "Learning",
+    name: "Learn",
     color: "#a3be8c",
     desc: "The atomic unit of AI judgment",
     detail: "Every AI decision becomes a verdict. Every human override closes the loop. This is how the ecosystem knows whether agents were right — not at decision time, but after consequences play out. The system gets smarter after every incident.",
@@ -310,13 +310,13 @@ function ComponentSection({ component, index, onInView }) {
           display: "flex", flexDirection: "column", justifyContent: "center",
           order: index % 2 === 0 ? 0 : 1,
         }}>
-          <div style={{
+          {component.codename && <div style={{
             fontFamily: "'JetBrains Mono', monospace", fontSize: 11,
             letterSpacing: "0.15em", color: component.color,
             textTransform: "uppercase", fontWeight: 600, marginBottom: 12,
           }}>
             {component.label}
-          </div>
+          </div>}
           <h2 style={{
             fontFamily: "'Instrument Serif', Georgia, serif", fontSize: 48,
             color: "#F0F0F3", fontWeight: 400, lineHeight: 1.1, margin: "0 0 16px 0",
