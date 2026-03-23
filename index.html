@@ -59,7 +59,7 @@ dependencies:
     id: "generate",
     label: "GENERATE",
     name: "Generation",
-    codename: "Foundry",
+    codename: "Generate",
     color: "#5e81ac",
     desc: "Manifests forged into monitoring infrastructure",
     detail: "Reads your manifest and produces everything: Prometheus recording rules, Grafana dashboards, alerting rules, and deploy gates. Including judgment SLO error budget rules that block deploys when AI quality degrades.",
@@ -84,7 +84,7 @@ $ nthlayer check-deploy --service loan-approval-agent
     id: "measure",
     label: "MEASURE",
     name: "Measurement",
-    codename: "Arbiter",
+    codename: "Measure",
     color: "#b48ead",
     desc: "Quality evaluation and autonomy governance",
     detail: "Point it at any AI agent. It evaluates output quality via adapters (push or pull), tracks confidence scores, detects drift, and emits OTel metrics that flow to Prometheus. When quality drops below your judgment SLO threshold, it automatically reduces agent autonomy — forcing human review until trust is re-established. Autonomy can only be restored by a human. The ratchet only tightens.",
@@ -110,7 +110,7 @@ gen_ai_override_reversal_total{
     id: "correlate",
     label: "CORRELATE",
     name: "Correlation",
-    codename: "SitRep",
+    codename: "Correlate",
     color: "#ebcb8b",
     desc: "Signal correlation at enterprise scale",
     detail: "Ingests signals from everywhere — quality metrics from Prometheus, deploy events, dependency health — and correlates them in real time. When a deploy causes judgment quality to drop, it connects the dots before you do.",
@@ -133,7 +133,7 @@ gen_ai_override_reversal_total{
     id: "respond",
     label: "RESPOND",
     name: "Response",
-    codename: "Mayday",
+    codename: "Respond",
     color: "#bf616a",
     desc: "AI-coordinated incident response",
     detail: "When a critical signal is detected, it coordinates the response: triage agents assess severity, investigation agents identify root cause, remediation agents propose and execute fixes. Humans stay in the loop for decisions that matter.",
@@ -158,7 +158,7 @@ gen_ai_override_reversal_total{
     id: "learn",
     label: "LEARN",
     name: "Learning",
-    codename: "Verdict",
+    codename: "Learn",
     color: "#a3be8c",
     desc: "The atomic unit of AI judgment",
     detail: "Every AI decision becomes a verdict. Every human override closes the loop. This is how the ecosystem knows whether agents were right — not at decision time, but after consequences play out. The system gets smarter after every incident.",
@@ -443,7 +443,7 @@ function LoopDiagram() {
         maxWidth: 600, margin: "0 auto 48px auto", lineHeight: 1.7,
       }}>
         Verdicts close the loop. Human overrides become calibration data. 
-        The Arbiter learns which judgments to trust — and when quality drops,
+        The Measure layer learns which judgments to trust — and when quality drops,
         it automatically reduces agent autonomy. Crucially, autonomy can only be
         restored by a human. The system tightens on its own. It never loosens without permission.
       </p>
