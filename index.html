@@ -1021,6 +1021,76 @@ function ScenarioAnimation() {
   );
 }
 
+function DemoTeaser() {
+  const ref = useRef(null);
+  const inView = useInView(ref, 0.2);
+  return (
+    <div ref={ref} style={{
+      padding: "100px 24px", textAlign: "center",
+      opacity: inView ? 1 : 0, transform: inView ? "translateY(0)" : "translateY(30px)",
+      transition: "all 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
+    }}>
+      <div style={{
+        maxWidth: 700, margin: "0 auto",
+        background: "rgba(136,192,208,0.03)",
+        border: "1px solid rgba(136,192,208,0.08)",
+        borderRadius: 16, padding: "60px 40px",
+      }}>
+        {/* Decorative topology nodes */}
+        <svg width="200" height="80" viewBox="0 0 200 80" style={{ marginBottom: 32, opacity: 0.7 }}>
+          {/* Edges */}
+          <line x1="40" y1="40" x2="100" y2="20" stroke="#88c0d0" strokeWidth="1" opacity="0.3" />
+          <line x1="40" y1="40" x2="100" y2="60" stroke="#88c0d0" strokeWidth="1" opacity="0.3" />
+          <line x1="100" y1="20" x2="160" y2="40" stroke="#b48ead" strokeWidth="1" opacity="0.3" />
+          <line x1="100" y1="60" x2="160" y2="40" stroke="#b48ead" strokeWidth="1" opacity="0.3" />
+          <line x1="100" y1="20" x2="100" y2="60" stroke="#5e81ac" strokeWidth="1" opacity="0.2" />
+          {/* Nodes */}
+          <circle cx="40" cy="40" r="5" fill="#81a1c1" opacity="0.8" />
+          <circle cx="100" cy="20" r="5" fill="#88c0d0" opacity="0.8" />
+          <circle cx="100" cy="60" r="5" fill="#5e81ac" opacity="0.8" />
+          <circle cx="160" cy="40" r="5" fill="#b48ead" opacity="0.8" />
+          {/* Glow on center nodes */}
+          <circle cx="100" cy="20" r="12" fill="#88c0d0" opacity="0.08" />
+          <circle cx="100" cy="60" r="12" fill="#5e81ac" opacity="0.08" />
+          {/* Animated pulse on the NthLayer node */}
+          <circle cx="160" cy="40" r="5" fill="none" stroke="#b48ead" strokeWidth="1" opacity="0.6">
+            <animate attributeName="r" values="5;14;5" dur="3s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0.6;0;0.6" dur="3s" repeatCount="indefinite" />
+          </circle>
+        </svg>
+
+        <h2 style={{
+          fontFamily: "'Instrument Serif', Georgia, serif", fontSize: 42,
+          color: "#F0F0F3", fontWeight: 400, margin: "0 0 20px 0",
+        }}>
+          See it live
+        </h2>
+        <p style={{
+          fontFamily: "'Inter', sans-serif", fontSize: 16, color: "#9CA3AF",
+          lineHeight: 1.7, margin: "0 0 36px 0", maxWidth: 560, marginLeft: "auto", marginRight: "auto",
+        }}>
+          29 services. 4 platforms. Two concurrent incidents — one AI model regression,
+          one infrastructure failure. Watch NthLayer detect, separate, and resolve both in 90 seconds.
+        </p>
+        <a href="/demo" style={{
+          fontFamily: "'JetBrains Mono', monospace", fontSize: 13,
+          padding: "14px 28px", borderRadius: 8,
+          background: "rgba(136,192,208,0.1)", color: "#88c0d0",
+          border: "1px solid rgba(136,192,208,0.3)",
+          textDecoration: "none", fontWeight: 600,
+          transition: "all 0.2s ease",
+          cursor: "pointer", display: "inline-block",
+        }}
+          onMouseEnter={e => { e.target.style.background = "rgba(136,192,208,0.15)"; e.target.style.borderColor = "rgba(136,192,208,0.5)"; }}
+          onMouseLeave={e => { e.target.style.background = "rgba(136,192,208,0.1)"; e.target.style.borderColor = "rgba(136,192,208,0.3)"; }}
+        >
+          Launch demo →
+        </a>
+      </div>
+    </div>
+  );
+}
+
 function CTASection() {
   const ref = useRef(null);
   const inView = useInView(ref, 0.2);
@@ -1115,6 +1185,7 @@ function NthLayerSite() {
         <div style={{ display: "flex", gap: 28, alignItems: "center" }}>
           {[
             { label: "Spec", href: "https://github.com/rsionnach/opensrm" },
+            { label: "Demo", href: "/demo" },
             { label: "Layers", href: "#layers" },
             { label: "Articles", href: "https://dev.to/rsionnach" },
           ].map((item) => (
@@ -1267,6 +1338,9 @@ function NthLayerSite() {
 
       {/* Animated scenario */}
       <ScenarioAnimation />
+
+      {/* Demo teaser */}
+      <DemoTeaser />
 
       {/* Sticky lifecycle bar */}
       <div id="layers" style={{
