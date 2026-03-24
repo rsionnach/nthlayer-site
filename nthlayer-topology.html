@@ -785,7 +785,6 @@ function NthLayerViz() {
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, padding: "7px 12px", display: "flex", justifyContent: "space-between", alignItems: "center", background: `linear-gradient(to bottom,rgba(11,17,32,0.93),transparent)`, zIndex: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <div style={{ width: 5, height: 5, borderRadius: "50%", background: playing ? "#a3be8c" : ACCENT, boxShadow: `0 0 6px ${playing ? "#a3be8c" : ACCENT}` }} />
-          <span style={{ color: TEXT1, fontSize: 13, fontWeight: 600, letterSpacing: 1.5 }}>NTHLAYER</span>
         </div>
         <div />
       </div>
@@ -899,7 +898,7 @@ function NthLayerViz() {
             <span style={{ color: TEXT2, fontSize: 14, fontWeight: 300 }}>{SERVICES.length}</span>
           </div>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-            <span style={{ color: ACCENT, fontSize: 9, letterSpacing: 0.5 }}>NTHLAYER</span>
+            <span style={{ color: ACCENT, fontSize: 9, letterSpacing: 0.5 }}>ECOSYSTEM</span>
             <span style={{ color: ACCENT, fontSize: 14, fontWeight: 300 }}>{ECOSYSTEM.length}</span>
           </div>
         </div>
@@ -908,8 +907,7 @@ function NthLayerViz() {
       {/* Start overlay */}
       {!started && (
         <div onClick={toggle} style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 20, background: "rgba(11,17,32,0.75)", backdropFilter: "blur(4px)", cursor: "pointer" }}>
-          <div style={{ color: TEXT1, fontSize: 20, fontWeight: 200, letterSpacing: 5, marginBottom: 6 }}>NTHLAYER</div>
-          <div style={{ color: TEXT2, fontSize: 12, letterSpacing: 1.2, marginBottom: 8 }}>INTELLIGENT RELIABILITY FOR COMPLEX SYSTEMS</div>
+          <div style={{ color: TEXT1, fontSize: 14, fontWeight: 300, letterSpacing: 3, marginBottom: 8 }}>INTELLIGENT RELIABILITY FOR COMPLEX SYSTEMS</div>
           <div style={{ color: TEXT3, fontSize: 9.5, lineHeight: 1.4, marginBottom: 24, maxWidth: 420, textAlign: "center" }}>Watch NthLayer detect, separate, and resolve two concurrent incidents across a multi-cloud topology.</div>
           <div style={{ width: 44, height: 44, borderRadius: "50%", border: `1px solid rgba(136,192,208,0.3)`, background: "rgba(136,192,208,0.06)", display: "flex", alignItems: "center", justifyContent: "center", color: TEXT1, fontSize: 16, marginBottom: 14 }}>▶</div>
           <div style={{ color: TEXT3, fontSize: 10, letterSpacing: 0.6 }}>CLICK TO START SCENARIO</div>
