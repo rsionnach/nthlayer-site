@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NthLayer — The AI Reliability Gap</title>
+    <meta name="description" content="Research across 9 established vendors, 14 startups, 6 governance platforms, and industry analysts reveals a structural blind spot: nobody is measuring whether AI agents are making good decisions.">
+    <meta property="og:title" content="The AI Reliability Gap Nobody Is Measuring">
+    <meta property="og:description" content="Every observability tool monitors AI mechanics. Nobody measures decision quality. Research from Anthropic, Gartner, Honeycomb, Kubernetes, and LangChain converges on the same missing piece.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://nthlayer.io/research">
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@600&family=Instrument+Serif&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0B1120;
+            color: #9CA3AF;
+            font-family: 'Inter', sans-serif;
+            font-weight: 300;
+            line-height: 1.8;
+            font-size: 15px;
+            -webkit-font-smoothing: antialiased;
+        }
+        ::selection { background: rgba(136,192,208,0.2); color: #F0F0F3; }
+
+        /* Layout */
+        .container { max-width: 740px; margin: 0 auto; padding: 0 24px; }
+        .wide { max-width: 900px; }
+
+        /* Nav */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            padding: 16px 32px;
+            background: rgba(11,17,32,0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(30,42,58,0.5);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        nav a { text-decoration: none; }
+        .nav-logo {
+            display: flex; align-items: center; gap: 10px;
+        }
+        .nav-logo img { height: 38px; width: auto; }
+        .nav-logo span {
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 21px; font-weight: 600; color: #F0F0F3;
+            letter-spacing: -0.01em;
+        }
+        .nav-links {
+            display: flex; gap: 28px; align-items: center;
+        }
+        .nav-links a {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px; color: #9CA3AF;
+            letter-spacing: 0.03em;
+        }
+        .nav-links a.active { color: #88c0d0; }
+        .nav-links a:hover { color: #F0F0F3; }
+        .nav-links .gh-btn {
+            color: #F0F0F3; background: rgba(240,240,243,0.08);
+            padding: 8px 16px; border: 1px solid rgba(240,240,243,0.15);
+            border-radius: 6px; font-weight: 600;
+        }
+        .nav-links .gh-btn:hover { background: rgba(240,240,243,0.12); }
+
+        /* Hero */
+        .hero {
+            padding: 140px 24px 60px;
+            text-align: center;
+        }
+        .hero-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px; letter-spacing: 0.2em;
+            color: #88c0d0; text-transform: uppercase;
+            font-weight: 600; margin-bottom: 24px;
+        }
+        .hero h1 {
+            font-family: 'Instrument Serif', Georgia, serif;
+            font-size: clamp(32px, 5vw, 48px);
+            font-weight: 400; line-height: 1.15;
+            color: #F0F0F3; margin-bottom: 20px;
+        }
+        .hero h1 em {
+            font-style: normal;
+            background: linear-gradient(135deg, #5e81ac, #88c0d0, #8fbcbb);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .hero-sub {
+            font-size: 16px; color: #6B7F99; max-width: 560px;
+            margin: 0 auto 16px; line-height: 1.7;
+        }
+        .hero-meta {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px; color: #4A5568;
+            margin-top: 32px;
+        }
+
+        /* Section headers */
+        h2 {
+            font-family: 'Instrument Serif', Georgia, serif;
+            font-size: 28px; font-weight: 400;
+            color: #F0F0F3; margin: 72px 0 20px; line-height: 1.25;
+        }
+        h3 {
+            font-family: 'Inter', sans-serif;
+            font-size: 16px; font-weight: 600;
+            color: #F0F0F3; margin: 40px 0 12px;
+        }
+
+        /* Body */
+        p { margin: 0 0 18px; }
+        strong { color: #F0F0F3; font-weight: 500; }
+
+        /* Blockquotes */
+        blockquote {
+            border-left: 3px solid #88c0d0;
+            padding: 12px 20px;
+            margin: 24px 0;
+            background: rgba(136,192,208,0.04);
+            border-radius: 0 8px 8px 0;
+            font-style: italic;
+            color: #9CA3AF;
+        }
+        blockquote .attr {
+            display: block; margin-top: 8px;
+            font-style: normal; font-size: 12px;
+            color: #6B7F99;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Evidence cards */
+        .evidence-card {
+            display: flex; gap: 20px;
+            padding: 24px 28px;
+            background: rgba(11,17,32,0.5);
+            border: 1px solid #1E2A3A;
+            border-radius: 0 10px 10px 0;
+            margin: 16px 0;
+        }
+        .evidence-source {
+            min-width: 150px; flex-shrink: 0;
+        }
+        .evidence-name {
+            font-family: 'Inter', sans-serif;
+            font-size: 14px; color: #F0F0F3;
+            font-weight: 600; margin-bottom: 3px;
+        }
+        .evidence-role {
+            font-size: 11px; color: #6B7F99; line-height: 1.4; margin-bottom: 3px;
+        }
+        .evidence-context {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px; color: #4A5568;
+        }
+        .evidence-insight {
+            font-size: 13px; line-height: 1.65;
+            font-style: italic; margin-bottom: 10px;
+        }
+        .evidence-gap {
+            font-size: 12px; font-weight: 500; margin: 0;
+        }
+
+        /* Stat callouts */
+        .stat-row {
+            display: flex; gap: 16px; margin: 32px 0;
+            flex-wrap: wrap;
+        }
+        .stat-card {
+            flex: 1; min-width: 180px;
+            padding: 20px;
+            background: rgba(11,17,32,0.5);
+            border: 1px solid #1E2A3A;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 28px; color: #F0F0F3;
+            font-weight: 700; margin-bottom: 4px;
+        }
+        .stat-label {
+            font-size: 12px; color: #6B7F99;
+        }
+        .stat-source {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px; color: #4A5568;
+            margin-top: 8px;
+        }
+
+        /* Verdict table */
+        .verdict-table {
+            width: 100%; border-collapse: collapse;
+            margin: 24px 0; font-size: 13px;
+        }
+        .verdict-table th {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px; letter-spacing: 0.1em;
+            color: #6B7F99; text-transform: uppercase;
+            text-align: left; padding: 10px 12px;
+            border-bottom: 1px solid #1E2A3A;
+        }
+        .verdict-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(30,42,58,0.5);
+            color: #9CA3AF;
+        }
+        .verdict-table td:first-child { color: #F0F0F3; font-weight: 500; }
+        .verdict-check { color: #a3be8c; }
+        .verdict-x { color: #bf616a; }
+        .verdict-partial { color: #ebcb8b; }
+
+        /* Section dividers */
+        .divider {
+            height: 1px; background: #1E2A3A;
+            margin: 60px 0;
+        }
+
+        /* CTA */
+        .cta-section {
+            text-align: center; padding: 60px 24px 80px;
+        }
+        .cta-button {
+            display: inline-block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px; padding: 14px 28px;
+            border-radius: 8px;
+            background: rgba(136,192,208,0.1);
+            color: #88c0d0;
+            border: 1px solid rgba(136,192,208,0.3);
+            text-decoration: none; font-weight: 600;
+            transition: all 0.2s;
+            margin: 0 8px;
+        }
+        .cta-button:hover {
+            background: rgba(136,192,208,0.15);
+            border-color: rgba(136,192,208,0.5);
+        }
+        .cta-secondary {
+            background: transparent; color: #6B7F99;
+            border-color: #1E2A3A;
+        }
+        .cta-secondary:hover {
+            color: #9CA3AF; border-color: #2A3A4E;
+            background: transparent;
+        }
+
+        /* Footer */
+        footer {
+            padding: 40px 32px;
+            border-top: 1px solid #1E2A3A;
+            max-width: 900px; margin: 0 auto;
+            display: flex; justify-content: space-between;
+            align-items: center;
+        }
+        footer span {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px; color: #81a1c1;
+        }
+        footer a {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px; color: #6B7F99;
+            text-decoration: none; margin-left: 20px;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .evidence-card { flex-direction: column; gap: 12px; }
+            .evidence-source { min-width: unset; }
+            .stat-row { flex-direction: column; }
+            footer { flex-direction: column; gap: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="/" class="nav-logo">
+        <img src="/favicon-192.png" alt="NthLayer">
+        <span>NthLayer</span>
+    </a>
+    <div class="nav-links">
+        <a href="https://github.com/rsionnach/opensrm" target="_blank" rel="noopener">Spec</a>
+        <a href="/demo">Demo</a>
+        <a href="/research" class="active">Research</a>
+        <a href="https://dev.to/rsionnach" target="_blank" rel="noopener">Articles</a>
+        <a href="https://github.com/rsionnach" target="_blank" rel="noopener" class="gh-btn">GitHub</a>
+    </div>
+</nav>
+
+<div class="hero">
+    <div class="container">
+        <div class="hero-label">Research</div>
+        <h1>The AI reliability gap<br><em>nobody is measuring</em></h1>
+        <p class="hero-sub">
+            Every observability tool monitors AI mechanics — latency, tokens, cost.
+            Nobody measures whether AI agents are making good decisions.
+            The industry is converging on this conclusion from every direction.
+        </p>
+        <div class="hero-meta">March 2026 · 9 vendors · 14 startups · 6 governance platforms · 12 reference points</div>
+    </div>
+</div>
+
+<div class="container">
+
+<!-- Key stats -->
+<div class="stat-row">
+    <div class="stat-card">
+        <div class="stat-number">89%</div>
+        <div class="stat-label">have AI observability</div>
+        <div class="stat-source">LangChain, Dec 2025</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">#1</div>
+        <div class="stat-label">barrier is still quality</div>
+        <div class="stat-source">LangChain, Dec 2025</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">69%</div>
+        <div class="stat-label">of AI decisions are human-verified</div>
+        <div class="stat-source">Dynatrace, Jan 2026</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">40%+</div>
+        <div class="stat-label">of agentic AI projects will be cancelled</div>
+        <div class="stat-source">Gartner, Jun 2025</div>
+    </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- Thesis -->
+<h2>The thesis</h2>
+
+<p>The observability industry has converged on a single strategy for AI: making AI better at investigating incidents. Every vendor has an MCP integration. Every vendor has a chatbot. Every vendor has a demo where the AI finds root cause in thirty seconds.</p>
+
+<p>Almost nobody is asking the other question: <strong>are the AI agents themselves making good decisions?</strong></p>
+
+<p>This research examines 9 established observability vendors, 14 AI-specific startups, 6 governance platforms, the major open-source standards, analyst reports from Gartner and Forrester, and conference talks from SREcon, QCon, and KubeCon. The finding is consistent: every tool monitors the mechanics of AI (latency, tokens, cost, error rates) while decision quality — reversal rates, confidence calibration, high-confidence failure rates — remains unmeasured in production.</p>
+
+<p>The gap is not subtle. It is explicitly acknowledged by the people building and operating frontier AI systems.</p>
+
+<div class="divider"></div>
+
+<!-- The 6 key voices -->
+<h2>What the industry is saying</h2>
+
+<div class="evidence-card" style="border-left: 3px solid #81a1c1;">
+    <div class="evidence-source">
+        <div class="evidence-name">Brendan Burns</div>
+        <div class="evidence-role">Kubernetes co-founder, Corporate VP Azure</div>
+        <div class="evidence-context">SREcon25 Americas</div>
+    </div>
+    <div>
+        <p class="evidence-insight">"Unlike traditional systems, there is rarely a clean 'working' or 'broken' signal from releases. We're going to monitor all the same things — do we return results successfully, what's the latency — but it no longer says that your system is working right."</p>
+        <p class="evidence-gap" style="color: #81a1c1;">→ The architect of modern infrastructure confirms traditional metrics are insufficient for AI.</p>
+    </div>
+</div>
+
+<div class="evidence-card" style="border-left: 3px solid #b48ead;">
+    <div class="evidence-source">
+        <div class="evidence-name">Alex Palcuie</div>
+        <div class="evidence-role">AI Reliability Engineering, Anthropic</div>
+        <div class="evidence-context">QCon London, March 2026</div>
+    </div>
+    <div>
+        <p class="evidence-insight">"Every single time, I would ask Claude, what happened here? Claude would say, request volume increase, this is a capacity problem. The real issue was a broken cache. Claude will get wrong correlation versus causation."</p>
+        <p class="evidence-gap" style="color: #b48ead;">→ Even frontier AI labs cannot trust their own models' judgment during incidents. Nobody is measuring the failure rate.</p>
+    </div>
+</div>
+
+<div class="evidence-card" style="border-left: 3px solid #ebcb8b;">
+    <div class="evidence-source">
+        <div class="evidence-name">Charity Majors</div>
+        <div class="evidence-role">Co-founder & CTO, Honeycomb</div>
+        <div class="evidence-context">Co-author, Observability Engineering</div>
+    </div>
+    <div>
+        <p class="evidence-insight">"You can't understand a model in a vacuum. With the surge of generative AI, complexity was increasing fast. It's now been cranked up even faster. The wheels are coming off."</p>
+        <p class="evidence-gap" style="color: #ebcb8b;">→ The person who wrote the book on observability says the current model is breaking for AI.</p>
+    </div>
+</div>
+
+<div class="evidence-card" style="border-left: 3px solid #bf616a;">
+    <div class="evidence-source">
+        <div class="evidence-name">Gartner</div>
+        <div class="evidence-role">Daryl Plummer, Distinguished VP Analyst</div>
+        <div class="evidence-context">Gartner IT Symposium</div>
+    </div>
+    <div>
+        <p class="evidence-insight">"The implementation of guardrails, security filters, human oversight, or even security observability are not sufficient to ensure consistently appropriate agent use."</p>
+        <p class="evidence-gap" style="color: #bf616a;">→ The enterprise's most trusted analyst declares the entire current stack insufficient. Not 'needs improvement.' Insufficient.</p>
+    </div>
+</div>
+
+<div class="evidence-card" style="border-left: 3px solid #a3be8c;">
+    <div class="evidence-source">
+        <div class="evidence-name">Niall Murphy</div>
+        <div class="evidence-role">Co-author, Google SRE book</div>
+        <div class="evidence-context">SREcon25 Americas</div>
+    </div>
+    <div>
+        <p class="evidence-insight">"We move into a world where determinism with respect to management of a system has gone away, and we are into probabilistic management."</p>
+        <p class="evidence-gap" style="color: #a3be8c;">→ A founding voice of SRE says the paradigm underpinning SLOs — deterministic systems with measurable error rates — has changed. AI needs new reliability primitives.</p>
+    </div>
+</div>
+
+<div class="evidence-card" style="border-left: 3px solid #5e81ac;">
+    <div class="evidence-source">
+        <div class="evidence-name">Dynatrace</div>
+        <div class="evidence-role">Pulse of Agentic AI 2026</div>
+        <div class="evidence-context">919 senior technology leaders, Jan 2026</div>
+    </div>
+    <div>
+        <p class="evidence-insight">"42% report limited real-time visibility to trace agent behaviour. 69% of agentic AI decisions are currently human-verified. Only 13% use fully autonomous agents."</p>
+        <p class="evidence-gap" style="color: #5e81ac;">→ The majority of AI decisions require human verification. That verification signal is the richest data source for judgment SLOs — and nobody is capturing it systematically.</p>
+    </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- What the vendors offer -->
+<h2>What every vendor actually offers</h2>
+
+<p>A cross-vendor analysis reveals near-total convergence. <strong>Every vendor now tracks the same AI metrics: latency, token usage, costs, error rates, and prompt/response traces.</strong> Several add hallucination detection and toxicity scanning. None measure decision quality as an SLO with error budgets.</p>
+
+<table class="verdict-table">
+    <thead>
+        <tr>
+            <th>Capability</th>
+            <th>Established vendors</th>
+            <th>AI startups</th>
+            <th>Governance platforms</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Latency / token / cost monitoring</td>
+            <td><span class="verdict-check">✓ All 9</span></td>
+            <td><span class="verdict-check">✓ All 14</span></td>
+            <td><span class="verdict-partial">~ Some</span></td>
+        </tr>
+        <tr>
+            <td>Prompt / response tracing</td>
+            <td><span class="verdict-check">✓ Most</span></td>
+            <td><span class="verdict-check">✓ All 14</span></td>
+            <td><span class="verdict-x">✗</span></td>
+        </tr>
+        <tr>
+            <td>Quality scoring (hallucination, relevance)</td>
+            <td><span class="verdict-partial">~ Few</span></td>
+            <td><span class="verdict-check">✓ Most</span></td>
+            <td><span class="verdict-x">✗</span></td>
+        </tr>
+        <tr>
+            <td>Decision quality as SLO with error budget</td>
+            <td><span class="verdict-x">✗ None</span></td>
+            <td><span class="verdict-x">✗ None</span></td>
+            <td><span class="verdict-x">✗ None</span></td>
+        </tr>
+        <tr>
+            <td>Pre-execution policy enforcement</td>
+            <td><span class="verdict-x">✗</span></td>
+            <td><span class="verdict-x">✗</span></td>
+            <td><span class="verdict-check">✓ All 6</span></td>
+        </tr>
+        <tr>
+            <td>Post-execution decision quality measurement</td>
+            <td><span class="verdict-x">✗ None</span></td>
+            <td><span class="verdict-partial">~ Eval only</span></td>
+            <td><span class="verdict-x">✗ None</span></td>
+        </tr>
+        <tr>
+            <td>Spec-driven monitoring generation</td>
+            <td><span class="verdict-x">✗ None</span></td>
+            <td><span class="verdict-x">✗ None</span></td>
+            <td><span class="verdict-x">✗ None</span></td>
+        </tr>
+        <tr>
+            <td>Multi-signal incident correlation (declared deps)</td>
+            <td><span class="verdict-partial">~ Runtime ML</span></td>
+            <td><span class="verdict-x">✗ None</span></td>
+            <td><span class="verdict-x">✗ None</span></td>
+        </tr>
+        <tr>
+            <td>Closed loop (incident → spec improvement)</td>
+            <td><span class="verdict-x">✗ None</span></td>
+            <td><span class="verdict-x">✗ None</span></td>
+            <td><span class="verdict-x">✗ None</span></td>
+        </tr>
+    </tbody>
+</table>
+
+<p>The incident correlation landscape is particularly revealing. Datadog, New Relic, Splunk, Elastic, and PagerDuty all use runtime ML-based correlation — pattern matching on alert streams with no declared dependency context. Dynatrace comes closest with its auto-discovered Smartscape topology combined with Davis causal AI, but this topology is discovered, not declared. No vendor supports walking a declared dependency graph to disentangle concurrent AI-related incidents.</p>
+
+<div class="divider"></div>
+
+<!-- The two conflations -->
+<h2>Two fundamental conflations</h2>
+
+<h3>"AI for Ops" vs. "Ops for AI"</h3>
+
+<p>Thoughtworks articulated a distinction that the market is consistently failing to make: <strong>"AI for Ops" is about using AI to optimise IT operations. "Ops for AI" is about making AI systems themselves trustworthy, safe, and reliable.</strong> They warn that collapsing these two disciplines into a single definition "erases the nuance and risks applying the wrong playbook to the wrong problem."</p>
+
+<p>Every established vendor is primarily investing in AI for Ops — using AI to help humans investigate incidents faster. Almost nobody is building Ops for AI — measuring whether AI systems themselves are reliable.</p>
+
+<h3>Governance vs. reliability</h3>
+
+<p>The AI agent governance space (Microsoft Agent Governance Toolkit, CortexHub, AControlLayer, Kore.ai, Acuvity, Aegis) focuses exclusively on <strong>pre-execution authorisation</strong>: is this agent allowed to do this? None of them systematically measure <strong>post-execution decision quality</strong>: did this agent make a good decision?</p>
+
+<p>JetBrains put it clearly: "Governance frameworks define permissions, approval gates, and high-level constraints. They rarely account for how an agent interprets context, chains tools, or explores edge cases. The result is a structural gap."</p>
+
+<p>The gap between governance and reliability is the space between the bouncer checking your ID at the door and the auditor reviewing whether the decisions made inside were sound. The industry has the bouncer. It doesn't have the auditor.</p>
+
+<div class="divider"></div>
+
+<!-- Open standards -->
+<h2>No open standard supports judgment SLOs</h2>
+
+<p>OpenTelemetry has merged evaluation event conventions (v1.39.0) with attributes for generic evaluation scores. The agentic systems proposal (Issue #2664) covers tasks, actions, agents, teams, artifacts, and memory — but <strong>no decision quality semantics</strong>. No <code>gen_ai.decision.*</code> or <code>gen_ai.override.*</code> attributes.</p>
+
+<p>OpenSLO v1.0 supports traditional ratio-based SLIs. It has <strong>no concept of judgment quality</strong>, observation periods, confidence-weighted metrics, or human override signals.</p>
+
+<p>All three major SLO frameworks (Sloth, Pyrra, Google SLO Generator) generate Prometheus rules exclusively for availability and latency SLOs. <strong>None support AI decision quality metrics.</strong></p>
+
+<p>OpenSRM is the only open specification that models AI decision quality as an SLO, with constructs for reversal rate, observation periods, high-confidence failure rate, and confidence thresholds.</p>
+
+<div class="divider"></div>
+
+<!-- Compound failure -->
+<h2>Compound failure and the Jevons Paradox</h2>
+
+<p>The theoretical argument that AI increases system complexity is now backed by production data.</p>
+
+<div class="stat-row">
+    <div class="stat-card">
+        <div class="stat-number">56%</div>
+        <div class="stat-label">year-over-year increase in AI safety incidents</div>
+        <div class="stat-source">Stanford AI Index</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">16%</div>
+        <div class="stat-label">year-over-year increase in enterprise incidents</div>
+        <div class="stat-source">PagerDuty</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">~20%</div>
+        <div class="stat-label">success rate for a 10-step AI agent at 85% per-step accuracy</div>
+        <div class="stat-source">Compound probability</div>
+    </div>
+</div>
+
+<p>The compound failure math is unforgiving. An AI agent with 85% per-step accuracy succeeds only about 20% of the time on a 10-step task. As organisations run dozens or hundreds of agents that interact with each other and with traditional services, <strong>individual agent monitoring cannot detect compound failures</strong> that emerge from interactions between agents.</p>
+
+<blockquote>
+    "It's easier to write software, so we write much more of it, so the complexity goes up and not down, which means things break in more interesting ways, which means more incidents, more on call... all the improvements in the tooling will be cancelled by this ever-growing complexity."
+    <span class="attr">— Alex Palcuie, Anthropic, QCon London 2026</span>
+</blockquote>
+
+<p>Only correlation across a declared dependency graph — not pattern matching from symptoms — can disentangle concurrent incidents in systems of this complexity.</p>
+
+<div class="divider"></div>
+
+<!-- What's missing -->
+<h2>The structural gap</h2>
+
+<p>The research identifies a market that is simultaneously booming and structurally incomplete. Billions flow into observability tooling, 40% of enterprise applications will integrate AI agents by end of 2026, and every major vendor has shipped an AI monitoring product. Yet the fundamental question — <strong>is this AI agent making good decisions?</strong> — remains unanswered by any shipping product.</p>
+
+<p>Three findings stand out:</p>
+
+<p><strong>First,</strong> Anthropic's own SRE publicly stating that Claude "gets wrong correlation versus causation" validates that even frontier AI labs cannot trust their own models' judgment — and have no way to measure the failure rate systematically.</p>
+
+<p><strong>Second,</strong> the LangChain survey showing 89% have observability while quality remains the #1 barrier proves the gap is not an observability gap in the traditional sense — it's a decision quality measurement gap.</p>
+
+<p><strong>Third,</strong> Gartner's declaration that "even security observability" is insufficient provides the analyst authority to frame this as an entirely new category, not an incremental improvement on existing tools.</p>
+
+<p>None of the gaps identified are temporary oversights that vendors will imminently fix. The architectural choices are structural. Established vendors built around metrics, logs, and traces for infrastructure. Startups built around SDK instrumentation for individual model evaluation. Governance platforms built around pre-execution policy gates.</p>
+
+<div class="divider"></div>
+
+<!-- NthLayer -->
+<h2>NthLayer fills the gap</h2>
+
+<p><strong>Judgment quality as a first-class SLO.</strong> Reversal rate, high-confidence failure rate, expected calibration error — measured continuously, evaluated against targets declared in the OpenSRM spec. When a bad model deploys, NthLayer sees the quality signal before traditional monitoring fires.</p>
+
+<p><strong>Spec-driven multi-signal correlation.</strong> Walk the declared dependency graph — not runtime discovery, not AI guesswork — and cross-reference deploys, metrics, logs, config changes against it. Disentangle concurrent incidents. Identify two root causes, not one alert storm.</p>
+
+<p><strong>A closed loop.</strong> Spec → generate monitoring → measure decision quality → correlate incidents → respond → learn → draft spec improvements → back to spec. Every component feeds the next. This is an ecosystem, not a feature.</p>
+
+<p><strong>External to the agent.</strong> NthLayer does not instrument agent internals. It does not ask the agent to govern itself. The spec declares what reliable means. The measurement is independent. The enforcement is outside the system. Because enforcement outside the system is governance. Instructions inside the system are hope.</p>
+
+</div>
+
+<!-- CTA -->
+<div class="cta-section">
+    <a href="/demo" class="cta-button">Watch the live demo →</a>
+    <a href="https://github.com/rsionnach/opensrm" target="_blank" rel="noopener" class="cta-button cta-secondary">Read the spec</a>
+</div>
+
+<!-- Footer -->
+<footer style="padding: 40px 32px; border-top: 1px solid #1E2A3A; display: flex; justify-content: space-between; align-items: center; max-width: 1100px; margin: 0 auto;">
+    <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #81a1c1;">NthLayer — built on OpenSRM</span>
+    <div style="display: flex; gap: 20px;">
+        <a href="https://github.com/rsionnach" target="_blank" rel="noopener" style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #6B7F99; text-decoration: none;">GitHub</a>
+        <a href="https://github.com/rsionnach/opensrm" target="_blank" rel="noopener" style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #6B7F99; text-decoration: none;">Spec</a>
+        <a href="https://robfox.dev" target="_blank" rel="noopener" style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #6B7F99; text-decoration: none;">robfox.dev</a>
+    </div>
+</footer>
+
+</body>
+</html>

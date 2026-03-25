@@ -242,6 +242,24 @@ const PHASES = [
     ],
     ecoActivate: ["nthlayer-measure", "nthlayer-correlate", "nthlayer-respond", "nthlayer-learn", "nthlayer-generate"],
   },
+  {
+    name: "Deploy Gate", dur: 18000, label: "DEPLOY BLOCKED", color: "#88c0d0",
+    desc: "Weeks later, model v2.4 attempts to deploy. The judgment SLO gate — added to the spec after INC-4821 — blocks it before it reaches production.",
+    events: [
+      { text: "fraud-detect model v2.4 submitted to deploy pipeline · evaluating against judgment SLO gate", tag: "generate", src: "cicd", color: "#88c0d0", nth: true },
+      { text: "canary evaluation: reversal rate 2.3% in 15m window (threshold: 2.0%) · judgment SLO error budget insufficient", tag: "generate", src: "gate", color: "#bf616a", nth: true },
+      { text: "deploy BLOCKED · model v2.4 rejected · spec recommendation from INC-4821 prevented a repeat incident · the loop is closed", tag: "generate", src: "gate", color: "#a3be8c", nth: true },
+    ],
+    overrides: {},
+    traceAI: false, traceInfra: false,
+    signals: [
+      { from: "fraud-detect", to: "nthlayer-generate", color: "#88c0d0", delay: 3000 },
+      { from: "nthlayer-generate", to: "nthlayer-measure", color: "#b48ead", delay: 6000 },
+      { from: "nthlayer-measure", to: "nthlayer-generate", color: "#bf616a", delay: 9000 },
+      { from: "nthlayer-learn", to: "nthlayer-generate", color: "#a3be8c", delay: 12000 },
+    ],
+    ecoActivate: ["nthlayer-generate", "nthlayer-measure", "nthlayer-learn"],
+  },
 ];
 
 function lerp(a, b, t) { return a + (b - a) * t; }
@@ -924,6 +942,7 @@ function NthLayerViz() {
               { value: "8 min", label: "EARLY WARNING", sub: "before traditional alerts" },
               { value: "0", label: "FALSE CORRELATIONS", sub: "right team, right runbook" },
               { value: "auto", label: "GOVERNANCE", sub: "autonomy reduced for safety" },
+              { value: "1", label: "DEPLOY BLOCKED", sub: "loop closed, repeat prevented" },
             ].map((s, i) => (
               <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 100 }}>
                 <div style={{ color: TEXT1, fontSize: 22, fontWeight: 200 }}>{s.value}</div>
@@ -962,7 +981,7 @@ function SiteNav() {
         {[
           { label: "Spec", href: "https://github.com/rsionnach/opensrm" },
           { label: "Demo", href: "/demo" },
-          { label: "Layers", href: "https://nthlayer.io#layers" },
+          { label: "Research", href: "/research" },
           { label: "Articles", href: "https://dev.to/rsionnach" },
         ].map((item) => (
           <a key={item.label} href={item.href} target={item.href.startsWith("http") ? "_blank" : undefined} rel={item.href.startsWith("http") ? "noopener" : undefined} style={{
