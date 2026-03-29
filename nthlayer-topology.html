@@ -740,11 +740,18 @@ function NthLayerViz() {
 
   useEffect(() => {
     const c = canvasRef.current; if (!c) return;
+    let prevW = 0;
     const resize = () => {
       const p = c.parentElement; const dpr = window.devicePixelRatio || 1;
-      c.width = p.clientWidth * dpr; c.height = p.clientHeight * dpr;
-      c.style.width = p.clientWidth + "px"; c.style.height = p.clientHeight + "px";
+      const newW = p.clientWidth;
+      c.width = newW * dpr; c.height = p.clientHeight * dpr;
+      c.style.width = newW + "px"; c.style.height = p.clientHeight + "px";
       c.getContext("2d").setTransform(dpr, 0, 0, dpr, 0, 0);
+      // Clear in-flight signals on layout shift to prevent visual teleport
+      if (prevW && Math.abs(newW - prevW) > 20) {
+        st.current.activeSignals = [];
+      }
+      prevW = newW;
     };
     resize();
     const ro = new ResizeObserver(resize); ro.observe(c.parentElement);
