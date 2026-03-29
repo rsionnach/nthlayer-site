@@ -557,6 +557,7 @@ function NthLayerViz() {
       const sig = s.activeSignals[i];
       if (sig.t < 1) {
         sig.t += (sig.spd * dt) / 2000;
+        if (sig.t > 1) sig.t = 1;
         const px = lerp(sig.fromX, sig.toX, sig.t);
         const py = lerp(sig.fromY, sig.toY, sig.t);
         ctx.beginPath(); ctx.moveTo(sig.fromX, sig.fromY); ctx.lineTo(px, py);
@@ -569,6 +570,12 @@ function NthLayerViz() {
         ctx.fillStyle = sig.color + "20"; ctx.fill();
         ctx.beginPath(); ctx.arc(px, py, 2 * sc, 0, 6.28);
         ctx.fillStyle = sig.color + "cc"; ctx.fill();
+        // Activate target node on arrival
+        if (sig.t >= 1 && !sig.arrived) {
+          sig.arrived = true;
+          const eNode = ECOSYSTEM.find(e => e.id === sig.toId);
+          if (eNode) s.ecoTargetOpacity[eNode.id] = 1.0;
+        }
       } else if (sig.fadeT < 2500) {
         sig.fadeT += dt;
         const fadeAlpha = Math.max(0, 1 - sig.fadeT / 2500);
@@ -579,10 +586,6 @@ function NthLayerViz() {
         if (sig.dashed) { ctx.setLineDash([4 * sc, 3 * sc]); }
         ctx.stroke();
         if (sig.dashed) { ctx.setLineDash([]); }
-        if (sig.fadeT < dt * 2) {
-          const eNode = ECOSYSTEM.find(e => e.id === sig.toId);
-          if (eNode) s.ecoTargetOpacity[eNode.id] = 1.0;
-        }
       } else {
         s.activeSignals.splice(i, 1);
       }
