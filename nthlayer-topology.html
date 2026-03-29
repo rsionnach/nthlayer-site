@@ -174,8 +174,8 @@ const PHASES = [
     overrides: { "fraud-detect": 0.65 },
     traceAI: false, traceInfra: false,
     signals: [
-      { from: "fraud-detect", to: "nthlayer-measure", color: "#b48ead", delay: 2000 },
-      { from: "nthlayer-measure", to: "nthlayer-learn", color: "#a3be8c", delay: 5000 },
+      { id: "bd-1", from: "fraud-detect", to: "nthlayer-measure", color: "#b48ead", delay: 2000 },
+      { id: "bd-2", from: "nthlayer-measure", to: "nthlayer-learn", color: "#a3be8c", delay: 1000, waitFor: "bd-1" },
     ],
     ecoActivate: ["nthlayer-measure", "nthlayer-learn"],
   },
@@ -195,9 +195,9 @@ const PHASES = [
     },
     traceAI: true, traceInfra: true,
     signals: [
-      { from: "fraud-detect", to: "nthlayer-correlate", color: "#ebcb8b", delay: 2000 },
-      { from: "config-service", to: "nthlayer-correlate", color: "#ebcb8b", delay: 6000 },
-      { from: "nthlayer-measure", to: "nthlayer-correlate", color: "#ebcb8b", delay: 10000 },
+      { id: "df-1", from: "fraud-detect", to: "nthlayer-correlate", color: "#ebcb8b", delay: 2000 },
+      { id: "df-2", from: "config-service", to: "nthlayer-correlate", color: "#ebcb8b", delay: 4000 },
+      { id: "df-3", from: "nthlayer-measure", to: "nthlayer-correlate", color: "#ebcb8b", delay: 2000, waitFor: "df-2" },
     ],
     ecoActivate: ["nthlayer-measure", "nthlayer-correlate", "nthlayer-learn"],
   },
@@ -218,9 +218,9 @@ const PHASES = [
     },
     traceAI: true, traceInfra: true,
     signals: [
-      { from: "nthlayer-correlate", to: "nthlayer-respond", color: "#bf616a", delay: 3000 },
-      { from: "nthlayer-respond", to: "fraud-detect", color: "#bf616a", delay: 7000 },
-      { from: "nthlayer-respond", to: "config-service", color: "#bf616a", delay: 10000 },
+      { id: "cr-1", from: "nthlayer-correlate", to: "nthlayer-respond", color: "#bf616a", delay: 3000 },
+      { id: "cr-2", from: "nthlayer-respond", to: "fraud-detect", color: "#bf616a", delay: 1500, waitFor: "cr-1" },
+      { id: "cr-3", from: "nthlayer-respond", to: "config-service", color: "#bf616a", delay: 3000, waitFor: "cr-1" },
     ],
     ecoActivate: ["nthlayer-measure", "nthlayer-correlate", "nthlayer-respond", "nthlayer-learn"],
   },
@@ -235,10 +235,10 @@ const PHASES = [
     overrides: {},
     traceAI: false, traceInfra: false,
     signals: [
-      { from: "nthlayer-measure", to: "fraud-detect", color: "#b48ead", delay: 3000, dashed: true },
-      { from: "nthlayer-measure", to: "nthlayer-learn", color: "#a3be8c", delay: 6000 },
-      { from: "nthlayer-correlate", to: "nthlayer-learn", color: "#a3be8c", delay: 7000 },
-      { from: "nthlayer-respond", to: "nthlayer-learn", color: "#a3be8c", delay: 8000 },
+      { id: "rc-1", from: "nthlayer-measure", to: "fraud-detect", color: "#b48ead", delay: 3000, dashed: true },
+      { id: "rc-2", from: "nthlayer-measure", to: "nthlayer-learn", color: "#a3be8c", delay: 1000, waitFor: "rc-1" },
+      { id: "rc-3", from: "nthlayer-correlate", to: "nthlayer-learn", color: "#a3be8c", delay: 2000, waitFor: "rc-1" },
+      { id: "rc-4", from: "nthlayer-respond", to: "nthlayer-learn", color: "#a3be8c", delay: 3000, waitFor: "rc-1" },
     ],
     ecoActivate: ["nthlayer-measure", "nthlayer-correlate", "nthlayer-respond", "nthlayer-learn", "nthlayer-generate"],
   },
@@ -363,20 +363,26 @@ function NthLayerViz() {
           }
         } else { s.playing = false; setPlaying(false); setFinished(true); }
       }
-      // Fire pending signals based on phase elapsed time
+      // Fire pending signals — supports waitFor (causal chaining)
       if (s.pendingSignals) {
         s.pendingSignals.forEach(sig => {
-          if (!sig.fired && s.pt >= (sig.delay || 0)) {
-            sig.fired = true;
-            const f = pos(sig.from), t = pos(sig.to);
-            s.activeSignals.push({
-              fromX: cx + f.x * sc, fromY: cy + f.y * sc,
-              toX: cx + t.x * sc, toY: cy + t.y * sc,
-              color: sig.color, dashed: !!sig.dashed,
-              t: 0, spd: 0.4, fadeT: 0, alive: true,
-              toId: sig.to,
-            });
+          if (sig.fired) return;
+          // If this signal waits for another, check if that signal has arrived
+          if (sig.waitFor) {
+            const dep = s.activeSignals.find(a => a.sigId === sig.waitFor && a.arrived);
+            if (!dep) return; // dependency hasn't arrived yet
+            // Use time since dependency arrived
+            if (!sig.waitStart) sig.waitStart = s.pt;
+            if (s.pt - sig.waitStart < (sig.delay || 0)) return;
+          } else {
+            if (s.pt < (sig.delay || 0)) return;
           }
+          sig.fired = true;
+          s.activeSignals.push({
+            sigId: sig.id, fromId: sig.from, toId: sig.to,
+            color: sig.color, dashed: !!sig.dashed,
+            t: 0, spd: 0.4, fadeT: 0, alive: true, arrived: false,
+          });
         });
       }
     }
@@ -552,15 +558,18 @@ function NthLayerViz() {
     if (s.traceAI) drawTrace(tracePathsAI, s.traceAI_P, INC_AI);
     if (s.traceInfra) drawTrace(tracePathsInfra, s.traceInfra_P, INC_INFRA);
 
-    // Active signal lines
+    // Active signal lines — coordinates computed dynamically (survives layout shifts)
     for (let i = s.activeSignals.length - 1; i >= 0; i--) {
       const sig = s.activeSignals[i];
+      const fp = pos(sig.fromId), tp = pos(sig.toId);
+      const fx = cx + fp.x * sc, fy = cy + fp.y * sc;
+      const tx = cx + tp.x * sc, ty = cy + tp.y * sc;
       if (sig.t < 1) {
         sig.t += (sig.spd * dt) / 2000;
         if (sig.t > 1) sig.t = 1;
-        const px = lerp(sig.fromX, sig.toX, sig.t);
-        const py = lerp(sig.fromY, sig.toY, sig.t);
-        ctx.beginPath(); ctx.moveTo(sig.fromX, sig.fromY); ctx.lineTo(px, py);
+        const px = lerp(fx, tx, sig.t);
+        const py = lerp(fy, ty, sig.t);
+        ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(px, py);
         ctx.strokeStyle = sig.color + "55";
         ctx.lineWidth = 1.6 * sc;
         if (sig.dashed) { ctx.setLineDash([4 * sc, 3 * sc]); }
@@ -580,7 +589,7 @@ function NthLayerViz() {
         sig.fadeT += dt;
         const fadeAlpha = Math.max(0, 1 - sig.fadeT / 2500);
         const alphaHex = Math.round(fadeAlpha * 0x55).toString(16).padStart(2, "0");
-        ctx.beginPath(); ctx.moveTo(sig.fromX, sig.fromY); ctx.lineTo(sig.toX, sig.toY);
+        ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(tx, ty);
         ctx.strokeStyle = sig.color + alphaHex;
         ctx.lineWidth = 1.6 * sc;
         if (sig.dashed) { ctx.setLineDash([4 * sc, 3 * sc]); }
