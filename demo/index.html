@@ -262,6 +262,16 @@ const PHASES = [
   },
 ];
 
+const VERDICT_COLORS = {
+  evaluation: '#b48ead',
+  correlation: '#ebcb8b',
+  triage: '#bf616a',
+  investigation: '#bf616a',
+  remediation: '#bf616a',
+  retrospective: '#a3be8c',
+  decision: '#81a1c1',
+};
+
 function lerp(a, b, t) { return a + (b - a) * t; }
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
@@ -283,6 +293,12 @@ function shortName(id) {
 }
 
 function NthLayerViz() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const isLiveMode = urlParams.get('mode') === 'live';
+  const prometheusUrl = urlParams.get('prometheus') || 'http://localhost:9090';
+  const verdictFeedUrl = urlParams.get('verdict-feed') || '/verdict-feed.json';
+  const grafanaUrl = urlParams.get('grafana') || 'http://localhost:3000';
+
   const canvasRef = useRef(null);
   const st = useRef({
     h: Object.fromEntries(SERVICES.map(s => [s.id, 1])),
@@ -295,6 +311,9 @@ function NthLayerViz() {
     ecoOpacity: Object.fromEntries(ECOSYSTEM.map(e => [e.id, e.id === "nthlayer-generate" ? 0.8 : 0.3])),
     ecoTargetOpacity: Object.fromEntries(ECOSYSTEM.map(e => [e.id, e.id === "nthlayer-generate" ? 0.8 : 0.3])),
     activeSignals: [],
+    svcDim: Object.fromEntries(SERVICES.map(s => [s.id, 1.0])),
+    svcDimTarget: Object.fromEntries(SERVICES.map(s => [s.id, 1.0])),
+    blastRadius: [],
   });
   const [phase, setPhase] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -302,6 +321,11 @@ function NthLayerViz() {
   const [events, setEvents] = useState([]);
   const [hovered, setHovered] = useState(null);
   const [finished, setFinished] = useState(false);
+  const [liveStatus, setLiveStatus] = useState("Connecting...");
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [verdicts, setVerdicts] = useState([]);
+  const [liveMetrics, setLiveMetrics] = useState({ reversalRate: null, errorRate: null, alertCount: 0 });
+  const [infraHealth, setInfraHealth] = useState({ prometheus: false, grafana: false, servicesUp: 0, servicesTotal: 8 });
   const mouse = useRef({ x: -999, y: -999 });
   const frame = useRef(null);
   const lt = useRef(null);
@@ -314,6 +338,244 @@ function NthLayerViz() {
     });
     st.current.particles = p;
   }, []);
+
+  // Live mode: auto-start and poll Prometheus for service health
+  useEffect(() => {
+    if (!isLiveMode) return;
+
+    setStarted(true);
+    setPlaying(true);
+    st.current.playing = true;
+
+    const pollPrometheus = async () => {
+      try {
+        // Get all firing alerts
+        const alertResp = await fetch(`${prometheusUrl}/api/v1/alerts`);
+        const alertData = await alertResp.json();
+        const firingAlerts = (alertData.data?.alerts || []).filter(a => a.state === 'firing');
+        const alertedServices = new Set(firingAlerts.map(a => a.labels?.service).filter(Boolean));
+
+        // Get error rates for services (sum by service to aggregate across status labels)
+        const errResp = await fetch(`${prometheusUrl}/api/v1/query?query=` +
+          encodeURIComponent('sum by(service) (rate(http_requests_total{status=~"5.."}[1m])) / sum by(service) (rate(http_requests_total[1m]))'));
+        const errData = await errResp.json();
+        const errorRates = {};
+        for (const r of (errData.data?.result || [])) {
+          errorRates[r.metric.service] = parseFloat(r.value[1]);
+        }
+
+        // Get reversal rate for ai-gate services (use rate() for current values, not cumulative totals)
+        const revResp = await fetch(`${prometheusUrl}/api/v1/query?query=` +
+          encodeURIComponent('sum by(service) (rate(gen_ai_overrides_total[1m])) / sum by(service) (rate(gen_ai_decisions_total[1m]))'));
+        const revData = await revResp.json();
+        const reversalRates = {};
+        for (const r of (revData.data?.result || [])) {
+          reversalRates[r.metric.service] = parseFloat(r.value[1]);
+        }
+
+        // Map to health values
+        const newHealth = {};
+        for (const svc of SERVICES) {
+          let health = 1.0;
+          if (alertedServices.has(svc.id)) health = Math.min(health, 0.3);
+          if (errorRates[svc.id] > 0.01) health = Math.min(health, 1.0 - errorRates[svc.id] * 10);
+          if (reversalRates[svc.id] > 0.02) health = Math.min(health, 1.0 - reversalRates[svc.id] * 5);
+          newHealth[svc.id] = Math.max(0, Math.min(1, health));
+        }
+
+        // Update mutable state target (animation loop lerps h toward ht)
+        for (const [id, h] of Object.entries(newHealth)) {
+          st.current.ht[id] = h;
+        }
+
+        // Count healthy services for status
+        const healthyCount = Object.values(newHealth).filter(h => h > 0.75).length;
+        setLiveStatus(`${healthyCount}/${SERVICES.length} SLOs HEALTHY`);
+
+        // Store raw metrics for panel display
+        const rev = reversalRates['fraud-detect'] || null;
+        const err = errorRates['payment-api'] || null;
+        const alerts = firingAlerts.length;
+        setLiveMetrics({ reversalRate: rev, errorRate: err, alertCount: alerts });
+      } catch(e) {
+        setLiveStatus("Prometheus unreachable");
+        console.warn('Prometheus poll failed:', e);
+      }
+    };
+
+    pollPrometheus();
+    const interval = setInterval(pollPrometheus, 5000);
+    return () => clearInterval(interval);
+  }, [isLiveMode]);
+
+  // Live mode: poll verdict feed and update event log + ecosystem panel
+  useEffect(() => {
+    if (!isLiveMode) return;
+
+    const ecoMap = {
+      'evaluation': 'nthlayer-measure',
+      'correlation': 'nthlayer-correlate',
+      'triage': 'nthlayer-respond',
+      'investigation': 'nthlayer-respond',
+      'remediation': 'nthlayer-respond',
+      'retrospective': 'nthlayer-learn',
+    };
+
+    const pollVerdicts = async () => {
+      try {
+        const resp = await fetch(verdictFeedUrl);
+        const data = await resp.json();
+        if (Array.isArray(data) && data.length > 0) {
+          // Store raw verdicts for panel
+          setVerdicts(data.slice(0, 20));
+
+          // Auto-open panel on NEW breach verdicts (not historical ones)
+          const breachVerdicts = data.filter(v => v.metadata?.custom?.breach === true);
+          const newestBreachTs = breachVerdicts.length > 0 ? breachVerdicts[0].timestamp : null;
+          const prevBreachTs = st.current._lastBreachTs || null;
+          const userClosedAt = st.current._userClosed || 0;
+          if (newestBreachTs && newestBreachTs !== prevBreachTs) {
+            // New breach verdict appeared — open panel unless user recently closed it
+            const breachTime = new Date(newestBreachTs).getTime();
+            if (breachTime > userClosedAt) {
+              setPanelOpen(true);
+            }
+          }
+          st.current._lastBreachTs = newestBreachTs;
+
+          // Extract blast radius from correlation verdicts for dimming
+          const corrVerdicts = data.filter(v => v.subject?.type === 'correlation');
+          const hasIncident = data.some(v => v.subject?.type === 'triage' && v.metadata?.custom?.status !== 'closed');
+          if (hasIncident && corrVerdicts.length > 0) {
+            st.current.blastRadius = corrVerdicts[0].metadata?.custom?.blast_radius || [];
+          } else if (!hasIncident) {
+            st.current.blastRadius = [];
+          }
+
+          const newEvents = data.slice(0, 10).map(v => ({
+            text: `${v.subject?.type || 'unknown'}: ${v.subject?.summary || v.subject?.ref || ''}`,
+            tag: v.subject?.type || 'unknown',
+            src: v.producer?.system || 'unknown',
+            color: VERDICT_COLORS[v.subject?.type] || '#9CA3AF',
+            nth: true,
+          }));
+          setEvents(newEvents);
+
+          // Update ecosystem panel based on latest verdict types
+          const latestTypes = new Set(data.slice(0, 5).map(v => v.subject?.type));
+          ECOSYSTEM.forEach(eco => {
+            const isActive = Object.entries(ecoMap).some(([vtype, ecoId]) =>
+              ecoId === eco.id && latestTypes.has(vtype)
+            );
+            st.current.ecoTargetOpacity[eco.id] = isActive ? 1.0 : 0.3;
+          });
+
+          // Fire signal animations when new verdicts appear
+          const newCount = data.length;
+          const prevCount = st.current._prevVerdictCount || 0;
+          if (newCount > prevCount) {
+            const c = canvasRef.current;
+            if (c) {
+              const dpr = window.devicePixelRatio || 1;
+              const W = c.width / dpr, H = c.height / dpr;
+              const cxP = W / 2, cyP = H / 2 + 5;
+              const scP = Math.min(W / 750, H / 520) * 0.92;
+              const posP = (id) => {
+                const svc = SERVICES.find(s => s.id === id);
+                if (svc) return svc;
+                const eco = ECOSYSTEM.find(e => e.id === id);
+                if (eco) return eco;
+                return { x: 0, y: 0 };
+              };
+              // Signal definitions per verdict type (mimics scripted demo)
+              const signalDefs = {
+                'evaluation': [
+                  { from: 'fraud-detect', to: 'nthlayer-measure', color: '#b48ead' },
+                  { from: 'nthlayer-measure', to: 'nthlayer-learn', color: '#a3be8c' },
+                ],
+                'correlation': [
+                  { from: 'nthlayer-measure', to: 'nthlayer-correlate', color: '#ebcb8b' },
+                  { from: 'fraud-detect', to: 'nthlayer-correlate', color: '#ebcb8b' },
+                ],
+                'triage': [
+                  { from: 'nthlayer-correlate', to: 'nthlayer-respond', color: '#bf616a' },
+                  { from: 'nthlayer-respond', to: 'fraud-detect', color: '#bf616a' },
+                ],
+                'retrospective': [
+                  { from: 'nthlayer-respond', to: 'nthlayer-learn', color: '#a3be8c' },
+                  { from: 'nthlayer-learn', to: 'nthlayer-generate', color: '#a3be8c' },
+                ],
+              };
+              // Fire signals for new verdict types
+              const newVerdicts = data.slice(0, newCount - prevCount);
+              const firedTypes = new Set();
+              newVerdicts.forEach(v => {
+                const vtype = v.subject?.type;
+                if (vtype && signalDefs[vtype] && !firedTypes.has(vtype)) {
+                  firedTypes.add(vtype);
+                  signalDefs[vtype].forEach((sig, idx) => {
+                    setTimeout(() => {
+                      const f = posP(sig.from), t = posP(sig.to);
+                      st.current.activeSignals.push({
+                        fromX: cxP + f.x * scP, fromY: cyP + f.y * scP,
+                        toX: cxP + t.x * scP, toY: cyP + t.y * scP,
+                        color: sig.color, dashed: false,
+                        t: 0, spd: 0.4, fadeT: 0, alive: true,
+                        toId: sig.to,
+                      });
+                    }, idx * 2000);
+                  });
+                }
+              });
+            }
+          }
+          st.current._prevVerdictCount = newCount;
+        }
+      } catch(e) { /* silently fail — feed may not exist yet */ }
+    };
+
+    pollVerdicts();
+    const interval = setInterval(pollVerdicts, 2000);
+    return () => clearInterval(interval);
+  }, [isLiveMode]);
+
+  // Live mode: poll infrastructure health (10s)
+  useEffect(() => {
+    if (!isLiveMode) return;
+    const fetchWithTimeout = (url, ms = 2000) => {
+      const ctrl = new AbortController();
+      const id = setTimeout(() => ctrl.abort(), ms);
+      return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(id));
+    };
+    const pollInfra = async () => {
+      const promOk = await fetchWithTimeout(`${prometheusUrl}/api/v1/status/buildinfo`)
+        .then(r => r.ok).catch(() => false);
+      // Grafana: use no-cors mode — opaque response means reachable, throw means down
+      const grafOk = await fetchWithTimeout(`${grafanaUrl}/api/health`)
+        .then(r => r.ok)
+        .catch(() => fetch(`${grafanaUrl}/`, { mode: 'no-cors', signal: AbortSignal.timeout(2000) })
+          .then(() => true).catch(() => false));
+      // Count services — each with 2s timeout so dead ports don't block
+      let up = 0;
+      for (const port of [8001,8002,8003,8004,8005,8006,8007,8008]) {
+        const ok = await fetchWithTimeout(`http://localhost:${port}/health`)
+          .then(r => r.ok).catch(() => false);
+        if (ok) up++;
+      }
+      setInfraHealth({ prometheus: promOk, grafana: grafOk, servicesUp: up, servicesTotal: 8 });
+    };
+    pollInfra();
+    const interval = setInterval(pollInfra, 10000);
+    return () => clearInterval(interval);
+  }, [isLiveMode]);
+
+  // Keyboard shortcut: 'p' to toggle panel
+  useEffect(() => {
+    if (!isLiveMode) return;
+    const handler = (e) => { if (e.key === 'p' && !e.ctrlKey && !e.metaKey) setPanelOpen(v => { if (v) st.current._userClosed = Date.now(); return !v; }); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [isLiveMode]);
 
   const tracePathsAI = useMemo(() => {
     const paths = [];
@@ -362,7 +624,7 @@ function NthLayerViz() {
 
     if (s.playing) {
       s.pt += dt;
-      if (s.pt >= PHASES[s.pi].dur) {
+      if (!isLiveMode && s.pt >= PHASES[s.pi].dur) {
         if (s.pi < PHASES.length - 1) {
           s.pi++; s.pt = 0; setPhase(s.pi);
           const np = PHASES[s.pi];
@@ -400,6 +662,15 @@ function NthLayerViz() {
     }
 
     SERVICES.forEach(sv => { s.h[sv.id] = lerp(s.h[sv.id], s.ht[sv.id], 0.0025 * dt); });
+    // Dim uninvolved services during incidents
+    if (s.blastRadius && s.blastRadius.length > 0) {
+      SERVICES.forEach(sv => {
+        s.svcDimTarget[sv.id] = s.blastRadius.includes(sv.id) ? 1.0 : 0.3;
+      });
+    } else {
+      SERVICES.forEach(sv => { s.svcDimTarget[sv.id] = 1.0; });
+    }
+    SERVICES.forEach(sv => { s.svcDim[sv.id] = lerp(s.svcDim[sv.id], s.svcDimTarget[sv.id], 0.003 * dt); });
     ECOSYSTEM.forEach(en => {
       s.ecoOpacity[en.id] = lerp(s.ecoOpacity[en.id], s.ecoTargetOpacity[en.id], 0.003 * dt);
     });
@@ -613,6 +884,8 @@ function NthLayerViz() {
       const h = s.h[sv.id], dc = DOMAIN_COLORS[sv.domain];
       const dx = mouse.current.x - x, dy = mouse.current.y - y;
       const isH = dx * dx + dy * dy < (r + 8) * (r + 8); if (isH) curH = sv.id;
+      const dim = s.svcDim[sv.id] || 1.0;
+      ctx.save(); ctx.globalAlpha = dim;
 
       if (h < 0.65) {
         ctx.beginPath(); ctx.arc(x, y, r + 5 * sc, 0, 6.28);
@@ -671,6 +944,7 @@ function NthLayerViz() {
       // Label text — colored by domain
       ctx.fillStyle = isH ? TEXT1 : dc.base + "bb";
       ctx.fillText(label, x, ly);
+      ctx.restore();
     });
 
     // Ecosystem nodes
@@ -794,7 +1068,7 @@ function NthLayerViz() {
   const FONT = "'JetBrains Mono',monospace";
 
   return (
-    <div style={{ width: "100%", height: "calc(100vh - 64px)", minHeight: 400, background: BG, position: "relative", overflow: "hidden", fontFamily: FONT }}>
+    <div style={{ width: isLiveMode && panelOpen ? "calc(100% - 360px)" : "100%", height: isLiveMode ? "100vh" : "calc(100vh - 64px)", minHeight: 400, background: BG, position: "relative", overflow: "hidden", fontFamily: FONT, transition: "width 0.3s ease" }}>
       <div style={{ position: "absolute", inset: 0 }}>
         <canvas ref={canvasRef} onMouseMove={onMouse} style={{ display: "block", cursor: hovered ? "pointer" : "default" }} />
       </div>
@@ -804,11 +1078,30 @@ function NthLayerViz() {
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <div style={{ width: 5, height: 5, borderRadius: "50%", background: playing ? "#a3be8c" : ACCENT, boxShadow: `0 0 6px ${playing ? "#a3be8c" : ACCENT}` }} />
         </div>
-        <div />
+        {isLiveMode && (
+          <button onClick={() => { setPanelOpen(v => { if (v) st.current._userClosed = Date.now(); return !v; }); }} title="Toggle panel (p)" style={{
+            width: 28, height: 28, borderRadius: 4, border: `1px solid ${BORDER}`,
+            background: panelOpen ? "rgba(136,192,208,0.12)" : "rgba(11,17,32,0.6)",
+            color: panelOpen ? ACCENT : TEXT3, cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 14, fontWeight: 700, lineHeight: 1, transition: "all 0.2s",
+          }}>{"\u2261"}</button>
+        )}
+        {!isLiveMode && <div />}
       </div>
 
-      {/* Phase */}
-      {started && (
+      {/* Phase / Live status */}
+      {isLiveMode ? (
+        <div style={{ position: "absolute", top: 24, left: 12, zIndex: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: liveStatus.includes("HEALTHY") ? "#a3be8c" : "#bf616a", boxShadow: `0 0 8px ${liveStatus.includes("HEALTHY") ? "#a3be8c" : "#bf616a"}`, animation: "pulse 2s infinite" }} />
+            <span style={{ color: liveStatus.includes("HEALTHY") ? "#a3be8c" : "#bf616a", fontSize: 13, fontWeight: 700, letterSpacing: 1.8 }}>
+              {liveStatus}
+            </span>
+          </div>
+          <div style={{ color: TEXT3, fontSize: 9, letterSpacing: 0.3 }}>LIVE · polling {prometheusUrl} · verdict store active</div>
+        </div>
+      ) : started && (
         <div style={{ position: "absolute", top: 30, left: 12, zIndex: 10, maxWidth: 680 }}>
           <div style={{ color: cp.color, fontSize: 11, fontWeight: 700, letterSpacing: 1.8, display: "flex", alignItems: "center", gap: 5 }}>
             {(cp.color === "#bf616a" || cp.color === "#ebcb8b") && <span style={{ width: 5, height: 5, borderRadius: "50%", background: cp.color, animation: "pulse 1s infinite", display: "inline-block" }} />}
@@ -818,8 +1111,8 @@ function NthLayerViz() {
         </div>
       )}
 
-      {/* Incident legend */}
-      {(phase === 2 || phase === 3) && started && (
+      {/* Incident legend — hidden in live mode */}
+      {!isLiveMode && (phase === 2 || phase === 3) && started && (
         <div style={{ position: "absolute", top: 26, right: 12, zIndex: 10, display: "flex", flexDirection: "column", gap: 2 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
             <div style={{ width: 8, height: 2, background: INC_AI, borderRadius: 1 }} />
@@ -832,9 +1125,12 @@ function NthLayerViz() {
         </div>
       )}
 
-      {/* Events */}
-      {events.length > 0 && (
-        <div style={{ position: "absolute", bottom: 42, left: 12, zIndex: 10, display: "flex", flexDirection: "column", gap: 2, maxWidth: "72%" }}>
+      {/* Events — only shown in scripted mode (live mode uses the panel) */}
+      {events.length > 0 && !isLiveMode && (
+        <div style={{
+          position: "absolute",
+          bottom: 42, left: 12, zIndex: 10, display: "flex", flexDirection: "column", gap: 2, maxWidth: "72%",
+        }}>
           {events.map((ev, i) => {
             const isCurrent = i >= events.length - (PHASES[phase]?.events?.length || 0);
             const nthBg = isCurrent ? "rgba(136,192,208,0.10)" : "rgba(136,192,208,0.04)";
@@ -889,26 +1185,65 @@ function NthLayerViz() {
 
       {/* Controls */}
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "7px 12px", background: `linear-gradient(to top,rgba(11,17,32,0.94),transparent)`, zIndex: 10, display: "flex", alignItems: "center", gap: 8 }}>
-        <button onClick={toggle} style={{
+        {!isLiveMode && <button onClick={toggle} style={{
           width: 26, height: 26, borderRadius: "50%", border: `1px solid rgba(136,192,208,0.3)`,
           background: "rgba(136,192,208,0.08)", color: TEXT1, cursor: "pointer",
           display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, flexShrink: 0, lineHeight: 1,
-        }}>{!started ? "▶" : playing ? "⏸" : "▶"}</button>
-        {started && <button onClick={go} style={{
+        }}>{!started ? "▶" : playing ? "⏸" : "▶"}</button>}
+        {!isLiveMode && started && <button onClick={go} style={{
           width: 20, height: 20, borderRadius: "50%", border: `1px solid ${BORDER}`,
           background: "transparent", color: TEXT3, cursor: "pointer",
           display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, flexShrink: 0,
         }}>↺</button>}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
-          <div style={{ display: "flex", gap: 1, height: 2 }}>
-            {PHASES.map((p, i) => {
-              const prog = i < phase ? 1 : i === phase && st.current.playing ? clamp(st.current.pt / p.dur, 0, 1) : 0;
-              return <div key={i} style={{ flex: p.dur, height: 2, borderRadius: 1, background: prog >= 1 ? ACCENT : prog > 0 ? `linear-gradient(to right,${ACCENT} ${prog * 100}%,${BORDER} ${prog * 100}%)` : BORDER }} />;
-            })}
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            {PHASES.map((p, i) => <span key={i} style={{ fontSize: 9, color: i === phase ? TEXT4 : BORDER }}>{p.name}</span>)}
-          </div>
+          {!isLiveMode && (
+            <>
+              <div style={{ display: "flex", gap: 1, height: 2 }}>
+                {PHASES.map((p, i) => {
+                  const prog = i < phase ? 1 : i === phase && st.current.playing ? clamp(st.current.pt / p.dur, 0, 1) : 0;
+                  return <div key={i} style={{ flex: p.dur, height: 2, borderRadius: 1, background: prog >= 1 ? ACCENT : prog > 0 ? `linear-gradient(to right,${ACCENT} ${prog * 100}%,${BORDER} ${prog * 100}%)` : BORDER }} />;
+                })}
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                {PHASES.map((p, i) => <span key={i} style={{ fontSize: 9, color: i === phase ? TEXT4 : BORDER }}>{p.name}</span>)}
+              </div>
+            </>
+          )}
+          {isLiveMode && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ color: "#88c0d0", fontSize: 10, fontWeight: 600, letterSpacing: 1 }}>NTHLAYER</span>
+                <span style={{ color: TEXT3, fontSize: 9 }}>{"\u00b7"}</span>
+                <span style={{ color: TEXT3, fontSize: 9 }}>Prometheus {prometheusUrl.replace('http://', '')}</span>
+                <span style={{ color: TEXT3, fontSize: 9 }}>{"\u00b7"}</span>
+                <span style={{ color: TEXT3, fontSize: 9 }}>Verdict Store</span>
+              </div>
+              <div style={{ display: "flex", gap: 24, fontSize: 10, color: TEXT3 }}>
+                <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  Prometheus
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", display: "inline-block", background: infraHealth.prometheus ? "#a3be8c" : "#bf616a" }} />
+                  <span style={{ fontSize: 9 }}>{prometheusUrl.replace('http://', '')}</span>
+                </span>
+                <a href={grafanaUrl} target="_blank" rel="noopener" style={{ display: "flex", alignItems: "center", gap: 6, color: TEXT3, textDecoration: "none", cursor: "pointer" }}
+                   onMouseOver={e => e.currentTarget.style.color = ACCENT} onMouseOut={e => e.currentTarget.style.color = TEXT3}>
+                  Grafana
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", display: "inline-block", background: infraHealth.grafana ? "#a3be8c" : "#bf616a" }} />
+                  <span style={{ fontSize: 9 }}>{grafanaUrl.replace('http://', '')}</span>
+                </a>
+                <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  Services
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", display: "inline-block",
+                    background: infraHealth.servicesUp === infraHealth.servicesTotal ? "#a3be8c"
+                      : infraHealth.servicesUp > infraHealth.servicesTotal / 2 ? "#ebcb8b" : "#bf616a" }} />
+                  <span style={{ fontSize: 9 }}>{infraHealth.servicesUp}/{infraHealth.servicesTotal}</span>
+                </span>
+                <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  Scrape
+                  <span style={{ fontSize: 9 }}>5s</span>
+                </span>
+              </div>
+            </div>
+          )}
         </div>
         <div style={{ display: "flex", gap: 12, alignItems: "flex-end", flexShrink: 0 }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
@@ -923,7 +1258,7 @@ function NthLayerViz() {
       </div>
 
       {/* Start overlay */}
-      {!started && (
+      {!started && !isLiveMode && (
         <div onClick={toggle} style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 20, background: "rgba(11,17,32,0.75)", backdropFilter: "blur(4px)", cursor: "pointer" }}>
           <div style={{ color: TEXT1, fontSize: 14, fontWeight: 300, letterSpacing: 3, marginBottom: 8 }}>INTELLIGENT RELIABILITY FOR COMPLEX SYSTEMS</div>
           <div style={{ color: TEXT3, fontSize: 9.5, lineHeight: 1.4, marginBottom: 24, maxWidth: 420, textAlign: "center" }}>Watch NthLayer detect, separate, and resolve two concurrent incidents across a multi-cloud topology.</div>
@@ -933,7 +1268,7 @@ function NthLayerViz() {
       )}
 
       {/* Closing summary overlay */}
-      {finished && (
+      {finished && !isLiveMode && (
         <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 20, background: "rgba(11,17,32,0.7)", backdropFilter: "blur(3px)" }}>
           <div style={{ color: "#a3be8c", fontSize: 10, fontWeight: 700, letterSpacing: 2, marginBottom: 16 }}>SCENARIO COMPLETE</div>
           <div style={{ display: "flex", gap: 32, marginBottom: 24 }}>
@@ -953,6 +1288,99 @@ function NthLayerViz() {
           </div>
           <div onClick={go} style={{ width: 36, height: 36, borderRadius: "50%", border: `1px solid rgba(136,192,208,0.3)`, background: "rgba(136,192,208,0.06)", display: "flex", alignItems: "center", justifyContent: "center", color: TEXT1, fontSize: 12, cursor: "pointer", marginBottom: 8 }}>↺</div>
           <div style={{ color: BORDER, fontSize: 9, letterSpacing: 0.6 }}>REPLAY SCENARIO</div>
+        </div>
+      )}
+
+      {/* Collapsible right panel — live mode only */}
+      {isLiveMode && (
+        <div style={{
+          position: "fixed", right: 0, top: 0, bottom: 0,
+          width: panelOpen ? 360 : 0,
+          background: BG, borderLeft: panelOpen ? `1px solid ${BORDER}` : "none",
+          transition: "width 0.3s ease", overflow: "hidden", zIndex: 30,
+          display: "flex", flexDirection: "column", fontFamily: FONT,
+        }}>
+          {/* Panel header */}
+          <div style={{ padding: "12px 14px 8px", borderBottom: `1px solid ${BORDER}`, flexShrink: 0, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ color: TEXT1, fontSize: 11, fontWeight: 700, letterSpacing: 1.5 }}>VERDICT STREAM</span>
+            <button onClick={() => { setPanelOpen(false); st.current._userClosed = Date.now(); }} style={{
+              background: "none", border: "none", color: TEXT3, cursor: "pointer", fontSize: 16, lineHeight: 1, padding: "2px 4px",
+            }}>{"\u00d7"}</button>
+          </div>
+
+          {/* Section 1: Verdict cards (~60%) */}
+          <div style={{ flex: "3 1 0", overflowY: "auto", padding: "6px 0" }}>
+            {verdicts.length === 0 && (
+              <div style={{ color: TEXT3, fontSize: 10, padding: "20px 14px", textAlign: "center" }}>No verdicts yet</div>
+            )}
+            {verdicts.slice(0, 8).map((v, i) => {
+              const vtype = v.subject?.type || 'unknown';
+              const vcolor = VERDICT_COLORS[vtype] || TEXT2;
+              const ts = (v.timestamp || '').slice(11, 19);
+              const rawSummary = v.subject?.summary || v.subject?.ref || '';
+              const summary = rawSummary.length <= 120 ? rawSummary : rawSummary.slice(0, 120).replace(/\s+\S*$/, '') + '\u2026';
+              const conf = v.judgment?.confidence || 0;
+              const producer = v.producer?.system || '';
+              const custom = v.metadata?.custom || {};
+              return (
+                <div key={i} style={{
+                  margin: "8px 12px", padding: "10px 14px", borderRadius: 6,
+                  border: `1px solid ${vcolor}30`, borderLeft: `3px solid ${vcolor}`,
+                  background: "rgba(11,17,32,0.6)",
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                    <span style={{ color: vcolor, fontSize: 10, fontWeight: 700, letterSpacing: 0.5 }}>{vtype.toUpperCase()}</span>
+                    <span style={{ color: TEXT3, fontSize: 9 }}>{ts}</span>
+                  </div>
+                  <div style={{ color: TEXT2, fontSize: 10, lineHeight: 1.4, marginBottom: 3, wordBreak: "break-word" }}>{summary}</div>
+                  {vtype === 'evaluation' && custom.breach !== undefined && (
+                    <div style={{ color: custom.breach ? '#bf616a' : '#a3be8c', fontSize: 9, marginBottom: 2 }}>
+                      {custom.slo_name || ''} {"\u00b7"} {custom.breach ? '\u26a0 BREACH' : '\u2713 OK'}
+                      {custom.consecutive !== undefined && ` \u00b7 consecutive: ${custom.consecutive}`}
+                    </div>
+                  )}
+                  {vtype === 'correlation' && custom.root_causes?.length > 0 && (
+                    <div style={{ color: '#ebcb8b', fontSize: 9, marginBottom: 2 }}>
+                      Root cause: {custom.root_causes[0].service || '?'} ({custom.root_causes[0].type || '?'})
+                    </div>
+                  )}
+                  {vtype === 'retrospective' && (
+                    <div style={{ color: '#a3be8c', fontSize: 9, marginBottom: 2 }}>
+                      {custom.duration_minutes ? `${custom.duration_minutes.toFixed(0)}m` : ''} {"\u00b7"} {custom.decisions_affected || 0} decisions
+                    </div>
+                  )}
+                  <div style={{ color: TEXT3, fontSize: 9 }}>{"\u25b6"} {producer} {"\u00b7"} conf {conf.toFixed(2)}</div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Metrics strip */}
+          <div style={{ borderTop: `1px solid ${BORDER}`, padding: "6px 14px", flexShrink: 0 }}>
+            <div style={{ display: "flex", gap: 16, fontSize: 10, flexWrap: "wrap" }}>
+              {[
+                { label: "REVERSAL", value: liveMetrics.reversalRate, target: 0.015, mul: 100 },
+                { label: "ERROR", value: liveMetrics.errorRate, target: 0.01, mul: 100 },
+                { label: "ALERTS", value: liveMetrics.alertCount, target: null, mul: 1 },
+              ].map((m, i) => {
+                const val = m.value != null ? m.value * m.mul : null;
+                const color = m.target == null
+                  ? (m.value > 0 ? '#bf616a' : '#a3be8c')
+                  : (m.value == null ? TEXT3 : m.value > m.target ? '#bf616a' : m.value > m.target * 0.8 ? '#ebcb8b' : '#a3be8c');
+                return (
+                  <span key={i} style={{ color: TEXT3 }}>
+                    {m.label}{" "}
+                    <span style={{ color, fontWeight: 600 }}>
+                      {val != null ? (m.mul === 100 ? val.toFixed(1) + '%' : val) : 'n/a'}
+                    </span>
+                    {m.value != null && m.target != null && <span style={{ color }}>{m.value > m.target ? ' \u26a0' : ' \u2713'}</span>}
+                    {m.target != null && <span style={{ color: TEXT3, fontSize: 8 }}> {"<"}{(m.target * 100).toFixed(1)}%</span>}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+
         </div>
       )}
 
@@ -1030,11 +1458,12 @@ function SiteFooter() {
 }
 
 function DemoPage() {
+  const isLive = new URLSearchParams(window.location.search).get('mode') === 'live';
   return (
     <div style={{ background: "#0B1120", minHeight: "100vh" }}>
-      <SiteNav />
+      {!isLive && <SiteNav />}
       <NthLayerViz />
-      <SiteFooter />
+      {!isLive && <SiteFooter />}
     </div>
   );
 }
