@@ -175,7 +175,7 @@ const PHASES = [
     traceAI: false, traceInfra: false,
     signals: [
       { id: "bd-1", from: "fraud-detect", to: "nthlayer-measure", color: "#b48ead", delay: 2000 },
-      { id: "bd-2", from: "nthlayer-measure", to: "nthlayer-learn", color: "#a3be8c", delay: 1000, waitFor: "bd-1" },
+      { id: "bd-2", from: "nthlayer-measure", to: "nthlayer-learn", color: "#a3be8c", delay: 2500, waitFor: "bd-1" },
     ],
     ecoActivate: ["nthlayer-measure", "nthlayer-learn"],
   },
@@ -197,7 +197,7 @@ const PHASES = [
     signals: [
       { id: "df-1", from: "fraud-detect", to: "nthlayer-correlate", color: "#ebcb8b", delay: 2000 },
       { id: "df-2", from: "config-service", to: "nthlayer-correlate", color: "#ebcb8b", delay: 4000 },
-      { id: "df-3", from: "nthlayer-measure", to: "nthlayer-correlate", color: "#ebcb8b", delay: 2000, waitFor: "df-2" },
+      { id: "df-3", from: "nthlayer-measure", to: "nthlayer-correlate", color: "#ebcb8b", delay: 2500, waitFor: "df-2" },
     ],
     ecoActivate: ["nthlayer-measure", "nthlayer-correlate", "nthlayer-learn"],
   },
@@ -219,8 +219,8 @@ const PHASES = [
     traceAI: true, traceInfra: true,
     signals: [
       { id: "cr-1", from: "nthlayer-correlate", to: "nthlayer-respond", color: "#bf616a", delay: 3000 },
-      { id: "cr-2", from: "nthlayer-respond", to: "fraud-detect", color: "#bf616a", delay: 1500, waitFor: "cr-1" },
-      { id: "cr-3", from: "nthlayer-respond", to: "config-service", color: "#bf616a", delay: 3000, waitFor: "cr-1" },
+      { id: "cr-2", from: "nthlayer-respond", to: "fraud-detect", color: "#bf616a", delay: 2500, waitFor: "cr-1" },
+      { id: "cr-3", from: "nthlayer-respond", to: "config-service", color: "#bf616a", delay: 4000, waitFor: "cr-1" },
     ],
     ecoActivate: ["nthlayer-measure", "nthlayer-correlate", "nthlayer-respond", "nthlayer-learn"],
   },

@@ -325,6 +325,8 @@ function NthLayerViz() {
   const [panelOpen, setPanelOpen] = useState(false);
   const [verdicts, setVerdicts] = useState([]);
   const [liveMetrics, setLiveMetrics] = useState({ reversalRate: null, errorRate: null, alertCount: 0 });
+  const [expandedVerdicts, setExpandedVerdicts] = useState(new Set());
+  const [expandedEvents, setExpandedEvents] = useState(new Set());
   const [infraHealth, setInfraHealth] = useState({ prometheus: false, grafana: false, servicesUp: 0, servicesTotal: 8 });
   const mouse = useRef({ x: -999, y: -999 });
   const frame = useRef(null);
@@ -1146,7 +1148,21 @@ function NthLayerViz() {
                 <span style={{ color: ev.nth ? ACCENT : ev.color, fontSize: 8.5, fontWeight: 700, flexShrink: 0, marginTop: 1, letterSpacing: 0.3 }}>
                   {ev.nth ? `◆ nthlayer-${ev.tag}` : ev.tag}
                 </span>
-                <span>{ev.text}</span>
+                <span onClick={(e) => {
+                  if (ev.text.length > 80) {
+                    e.stopPropagation();
+                    setExpandedEvents(prev => {
+                      const next = new Set(prev);
+                      next.has(i) ? next.delete(i) : next.add(i);
+                      return next;
+                    });
+                  }
+                }} style={{ cursor: ev.text.length > 80 ? "pointer" : "default" }}>
+                  {expandedEvents.has(i) || ev.text.length <= 80
+                    ? ev.text
+                    : ev.text.slice(0, 80).replace(/\s+\S*$/, '') + '\u2026'}
+                  {ev.text.length > 80 && <span style={{ color: TEXT3, fontSize: 7, marginLeft: 3 }}>{expandedEvents.has(i) ? '\u25b2' : '\u25bc'}</span>}
+                </span>
               </div>
             );
           })}
@@ -1318,21 +1334,33 @@ function NthLayerViz() {
               const vcolor = VERDICT_COLORS[vtype] || TEXT2;
               const ts = (v.timestamp || '').slice(11, 19);
               const rawSummary = v.subject?.summary || v.subject?.ref || '';
-              const summary = rawSummary.length <= 120 ? rawSummary : rawSummary.slice(0, 120).replace(/\s+\S*$/, '') + '\u2026';
+              const isExpanded = expandedVerdicts.has(i);
+              const isTruncatable = rawSummary.length > 120;
+              const summary = isExpanded || !isTruncatable ? rawSummary : rawSummary.slice(0, 120).replace(/\s+\S*$/, '') + '\u2026';
               const conf = v.judgment?.confidence || 0;
               const producer = v.producer?.system || '';
               const custom = v.metadata?.custom || {};
               return (
-                <div key={i} style={{
+                <div key={i} onClick={() => {
+                  if (isTruncatable) setExpandedVerdicts(prev => {
+                    const next = new Set(prev);
+                    next.has(i) ? next.delete(i) : next.add(i);
+                    return next;
+                  });
+                }} style={{
                   margin: "8px 12px", padding: "10px 14px", borderRadius: 6,
                   border: `1px solid ${vcolor}30`, borderLeft: `3px solid ${vcolor}`,
                   background: "rgba(11,17,32,0.6)",
+                  cursor: isTruncatable ? "pointer" : "default",
                 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
                     <span style={{ color: vcolor, fontSize: 10, fontWeight: 700, letterSpacing: 0.5 }}>{vtype.toUpperCase()}</span>
                     <span style={{ color: TEXT3, fontSize: 9 }}>{ts}</span>
                   </div>
-                  <div style={{ color: TEXT2, fontSize: 10, lineHeight: 1.4, marginBottom: 3, wordBreak: "break-word" }}>{summary}</div>
+                  <div style={{ color: TEXT2, fontSize: 10, lineHeight: 1.4, marginBottom: 3, wordBreak: "break-word" }}>
+                    {summary}
+                    {isTruncatable && <span style={{ color: TEXT3, fontSize: 8, marginLeft: 4 }}>{isExpanded ? '\u25b2' : '\u25bc'}</span>}
+                  </div>
                   {vtype === 'evaluation' && custom.breach !== undefined && (
                     <div style={{ color: custom.breach ? '#bf616a' : '#a3be8c', fontSize: 9, marginBottom: 2 }}>
                       {custom.slo_name || ''} {"\u00b7"} {custom.breach ? '\u26a0 BREACH' : '\u2713 OK'}
