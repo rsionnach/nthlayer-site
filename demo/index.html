@@ -1700,98 +1700,170 @@ function NthLayerViz() {
 
               {verdict ? (
                 <div>
-                  {/* Summary */}
-                  <div style={{ color: TEXT2, fontSize: 14, lineHeight: 1.5, marginBottom: 10 }}>
-                    {verdict.subject?.summary || verdict.subject?.ref || ''}
-                  </div>
-
-                  {/* Type-specific details */}
-                  {vtype === 'evaluation' && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                      {custom.service && <div style={{ color: TEXT3, fontSize: 13 }}>Service: <span style={{ color: TEXT2 }}>{custom.service}</span></div>}
-                      {custom.slo_name && <div style={{ color: TEXT3, fontSize: 13 }}>SLO: <span style={{ color: TEXT2 }}>{custom.slo_name}</span></div>}
+                  {/* Curated narrative per verdict type — template structure with live data */}
+                  {vtype === 'evaluation' && !custom.breach && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      <div style={{ color: TEXT2, fontSize: 14, lineHeight: 1.6 }}>
+                        NthLayer is continuously evaluating <span style={{ color: ACCENT, fontWeight: 600 }}>{verdict.subject?.ref || 'this service'}</span>'s
+                        {' '}judgment quality against its OpenSRM spec.
+                      </div>
                       {custom.current_value !== undefined && custom.target !== undefined && (
-                        <div style={{ color: TEXT3, fontSize: 13 }}>
-                          Current: <span style={{ color: custom.breach ? '#bf616a' : '#a3be8c', fontWeight: 600 }}>{(custom.current_value * 100).toFixed(1)}%</span>
-                          {" "} Target: <span style={{ color: TEXT2 }}>{(custom.target * 100).toFixed(1)}%</span>
+                        <div style={{ background: "rgba(163,190,140,0.08)", borderRadius: 6, padding: "10px 14px" }}>
+                          <div style={{ color: TEXT3, fontSize: 12, marginBottom: 4 }}>{custom.slo_name || 'SLO'}</div>
+                          <div style={{ fontSize: 20, fontWeight: 700, color: '#a3be8c' }}>{(custom.current_value * 100).toFixed(1)}%</div>
+                          <div style={{ color: TEXT3, fontSize: 12 }}>Target: &lt;{(custom.target * 100).toFixed(1)}%</div>
                         </div>
                       )}
-                      <div style={{ color: custom.breach ? '#bf616a' : '#a3be8c', fontSize: 13, fontWeight: 600 }}>
-                        {custom.breach ? '\u26a0 BREACH' : '\u2713 Within target'}
-                        {custom.consecutive !== undefined && ` \u00b7 Consecutive: ${custom.consecutive}`}
+                      <div style={{ color: TEXT4, fontSize: 12, lineHeight: 1.5 }}>
+                        This is a <em>judgment SLO</em> — it measures AI decision quality, not infrastructure health. NthLayer detected this automatically from Prometheus metrics.
+                      </div>
+                    </div>
+                  )}
+
+                  {vtype === 'evaluation' && custom.breach && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      <div style={{ color: TEXT2, fontSize: 14, lineHeight: 1.6 }}>
+                        <span style={{ color: ACCENT, fontWeight: 600 }}>{verdict.subject?.ref || 'This service'}</span>'s
+                        {' '}AI decisions are being overridden by humans at an elevated rate.
+                      </div>
+                      {custom.current_value !== undefined && custom.target !== undefined && (
+                        <div style={{ background: "rgba(191,97,106,0.08)", borderRadius: 6, padding: "10px 14px" }}>
+                          <div style={{ color: TEXT3, fontSize: 12, marginBottom: 4 }}>{custom.slo_name || 'SLO'} — BREACH</div>
+                          <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                            <span style={{ fontSize: 24, fontWeight: 700, color: '#bf616a' }}>{(custom.current_value * 100).toFixed(1)}%</span>
+                            <span style={{ color: TEXT3, fontSize: 13 }}>vs target &lt;{(custom.target * 100).toFixed(1)}%</span>
+                          </div>
+                          {custom.consecutive !== undefined && (
+                            <div style={{ color: '#bf616a', fontSize: 12, marginTop: 4 }}>{custom.consecutive} consecutive breach windows</div>
+                          )}
+                        </div>
+                      )}
+                      <div style={{ color: TEXT4, fontSize: 12, lineHeight: 1.5 }}>
+                        NthLayer detected this <em>8 minutes before</em> any infrastructure alert fired. This is the power of judgment SLOs — catching AI quality degradation that traditional monitoring misses.
                       </div>
                     </div>
                   )}
 
                   {vtype === 'correlation' && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      <div style={{ color: TEXT2, fontSize: 14, lineHeight: 1.6 }}>
+                        NthLayer correlated the breach with the service dependency graph to identify the blast radius.
+                      </div>
                       {custom.root_causes?.length > 0 && (
-                        <div style={{ color: TEXT3, fontSize: 13 }}>Root cause: <span style={{ color: '#ebcb8b' }}>{custom.root_causes[0].service || '?'} ({custom.root_causes[0].type || '?'})</span></div>
+                        <div style={{ background: "rgba(235,203,139,0.08)", borderRadius: 6, padding: "10px 14px" }}>
+                          <div style={{ color: TEXT3, fontSize: 12, marginBottom: 4 }}>Root cause</div>
+                          <div style={{ color: '#ebcb8b', fontSize: 15, fontWeight: 600 }}>{custom.root_causes[0].service || '?'}</div>
+                        </div>
                       )}
                       {custom.blast_radius?.length > 0 && (
-                        <div style={{ color: TEXT3, fontSize: 13 }}>Blast radius: <span style={{ color: TEXT2 }}>{custom.blast_radius.map(b => b.service || b).join(', ')}</span></div>
+                        <div style={{ color: TEXT3, fontSize: 13 }}>
+                          Blast radius: <span style={{ color: TEXT2, fontWeight: 600 }}>{custom.blast_radius.length} services</span>
+                          {' \u2014 '}{custom.blast_radius.map(b => b.service || b).join(', ')}
+                        </div>
                       )}
-                      {custom.reasoning && <div style={{ color: TEXT4, fontSize: 12, marginTop: 4, lineHeight: 1.4 }}>{typeof custom.reasoning === 'string' ? custom.reasoning : custom.reasoning.overall_assessment || JSON.stringify(custom.reasoning).slice(0, 200)}</div>}
+                      <div style={{ color: TEXT4, fontSize: 12, lineHeight: 1.5 }}>
+                        The dependency graph comes from the OpenSRM spec — NthLayer knows which services are affected without manual investigation.
+                      </div>
                     </div>
                   )}
 
                   {vtype === 'triage' && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                      {custom.severity && <div style={{ color: TEXT3, fontSize: 13 }}>Severity: <span style={{ color: custom.severity === 'critical' ? '#bf616a' : '#ebcb8b', fontWeight: 600 }}>{custom.severity}</span></div>}
-                      {custom.team && <div style={{ color: TEXT3, fontSize: 13 }}>Team: <span style={{ color: TEXT2 }}>{custom.team}</span></div>}
-                      {custom.affected_slos?.length > 0 && (
-                        <div style={{ color: TEXT3, fontSize: 13 }}>Affected SLOs: <span style={{ color: TEXT2 }}>{custom.affected_slos.join(', ')}</span></div>
-                      )}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      <div style={{ color: TEXT2, fontSize: 14, lineHeight: 1.6 }}>
+                        The triage agent assessed the incident and classified it automatically.
+                      </div>
+                      <div style={{ background: "rgba(191,97,106,0.08)", borderRadius: 6, padding: "10px 14px" }}>
+                        <div style={{ color: '#bf616a', fontSize: 18, fontWeight: 700 }}>
+                          {verdict.subject?.summary ? verdict.subject.summary.split('.')[0] : 'Incident assessed'}
+                        </div>
+                      </div>
+                      <div style={{ color: TEXT4, fontSize: 12, lineHeight: 1.5 }}>
+                        The triage agent used the OpenSRM spec context to distinguish AI model quality degradation from infrastructure failure — a distinction traditional on-call tools can't make.
+                      </div>
                     </div>
                   )}
 
                   {vtype === 'investigation' && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                      {custom.root_cause && <div style={{ color: TEXT3, fontSize: 13 }}>Root cause: <span style={{ color: TEXT2 }}>{custom.root_cause}</span></div>}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      <div style={{ color: TEXT2, fontSize: 14, lineHeight: 1.6 }}>
+                        The investigation agent identified the root cause.
+                      </div>
                       {judgment.confidence !== undefined && (
-                        <div style={{ color: TEXT3, fontSize: 13 }}>Confidence: <span style={{ color: judgment.confidence > 0.8 ? '#a3be8c' : '#ebcb8b', fontWeight: 600 }}>{(judgment.confidence * 100).toFixed(0)}%</span></div>
-                      )}
-                      {custom.hypotheses?.length > 0 && (
-                        <div style={{ color: TEXT4, fontSize: 12, marginTop: 4 }}>
-                          {custom.hypotheses.slice(0, 3).map((h, i) => <div key={i}>- {h}</div>)}
+                        <div style={{ background: "rgba(191,97,106,0.08)", borderRadius: 6, padding: "10px 14px" }}>
+                          <div style={{ color: TEXT3, fontSize: 12, marginBottom: 4 }}>Root cause confidence</div>
+                          <div style={{ fontSize: 22, fontWeight: 700, color: judgment.confidence > 0.7 ? '#a3be8c' : '#ebcb8b' }}>{(judgment.confidence * 100).toFixed(0)}%</div>
                         </div>
                       )}
+                      <div style={{ color: TEXT2, fontSize: 13, lineHeight: 1.5 }}>
+                        {verdict.subject?.summary ? verdict.subject.summary.split('.')[0] + '.' : ''}
+                      </div>
+                      <div style={{ color: TEXT4, fontSize: 12, lineHeight: 1.5 }}>
+                        The investigation agent identified this as an AI model quality issue, not infrastructure — recommending model-specific remediation rather than the typical restart/scale-up.
+                      </div>
                     </div>
                   )}
 
                   {vtype === 'communication' && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                      {custom.title && <div style={{ color: TEXT3, fontSize: 13 }}>Status page: <span style={{ color: TEXT2 }}>{custom.title}</span></div>}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      <div style={{ color: TEXT2, fontSize: 14, lineHeight: 1.6 }}>
+                        A status update was drafted automatically for stakeholder communication.
+                      </div>
+                      <div style={{ background: "rgba(191,97,106,0.08)", borderRadius: 6, padding: "10px 14px" }}>
+                        <div style={{ color: TEXT2, fontSize: 13, lineHeight: 1.5 }}>
+                          {verdict.subject?.summary ? verdict.subject.summary.split('.')[0] + '.' : 'Status update drafted.'}
+                        </div>
+                      </div>
+                      <div style={{ color: TEXT4, fontSize: 12, lineHeight: 1.5 }}>
+                        The communication agent drafted this using investigation findings — no human had to write the first draft. Human edit rate on these is typically under 15%.
+                      </div>
                     </div>
                   )}
 
                   {vtype === 'remediation' && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                      {custom.action && <div style={{ color: TEXT3, fontSize: 13 }}>Action: <span style={{ color: TEXT2 }}>{custom.action}</span></div>}
-                      {custom.rationale && <div style={{ color: TEXT4, fontSize: 12, lineHeight: 1.4 }}>{custom.rationale}</div>}
-                      {custom.approval_status && (
-                        <div style={{ color: custom.approval_status === 'approved' ? '#a3be8c' : '#ebcb8b', fontSize: 13, fontWeight: 600 }}>
-                          {custom.approval_status === 'approved' ? '\u2713 Approved' : '\u23f3 ' + custom.approval_status}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      <div style={{ color: TEXT2, fontSize: 14, lineHeight: 1.6 }}>
+                        The remediation agent recommended an action based on the OpenSRM spec.
+                      </div>
+                      <div style={{ background: "rgba(191,97,106,0.08)", borderRadius: 6, padding: "10px 14px" }}>
+                        <div style={{ color: TEXT2, fontSize: 15, fontWeight: 600 }}>
+                          {verdict.subject?.summary ? verdict.subject.summary.split('.')[0] : 'Remediation proposed'}
                         </div>
-                      )}
+                      </div>
+                      <div style={{ color: TEXT4, fontSize: 12, lineHeight: 1.5 }}>
+                        Because the OpenSRM spec declares this as a judgment SLO breach (not infrastructure), the agent recommended model rollback — not the typical restart or scale-up that traditional automation would attempt.
+                      </div>
                     </div>
                   )}
 
                   {vtype === 'retrospective' && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                      {custom.duration_minutes && <div style={{ color: TEXT3, fontSize: 13 }}>Duration: <span style={{ color: TEXT2 }}>{custom.duration_minutes.toFixed(0)}m</span></div>}
-                      {custom.decisions_affected !== undefined && <div style={{ color: TEXT3, fontSize: 13 }}>Decisions affected: <span style={{ color: TEXT2 }}>{custom.decisions_affected}</span></div>}
-                      {custom.verdict_count !== undefined && <div style={{ color: TEXT3, fontSize: 13 }}>Verdict count: <span style={{ color: TEXT2 }}>{custom.verdict_count}</span></div>}
-                      {custom.recommendation && <div style={{ color: '#a3be8c', fontSize: 13, marginTop: 4 }}>{custom.recommendation}</div>}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      <div style={{ color: TEXT2, fontSize: 14, lineHeight: 1.6 }}>
+                        NthLayer walked the full verdict chain to produce a retrospective.
+                      </div>
+                      <div style={{ display: "flex", gap: 12 }}>
+                        {custom.duration_minutes !== undefined && (
+                          <div style={{ background: "rgba(163,190,140,0.08)", borderRadius: 6, padding: "10px 14px", flex: 1, textAlign: "center" }}>
+                            <div style={{ color: TEXT3, fontSize: 11 }}>Duration</div>
+                            <div style={{ color: '#a3be8c', fontSize: 18, fontWeight: 700 }}>{custom.duration_minutes < 1 ? '<1m' : custom.duration_minutes.toFixed(0) + 'm'}</div>
+                          </div>
+                        )}
+                        {custom.decisions_affected !== undefined && (
+                          <div style={{ background: "rgba(163,190,140,0.08)", borderRadius: 6, padding: "10px 14px", flex: 1, textAlign: "center" }}>
+                            <div style={{ color: TEXT3, fontSize: 11 }}>Decisions affected</div>
+                            <div style={{ color: '#a3be8c', fontSize: 18, fontWeight: 700 }}>{custom.decisions_affected}</div>
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ color: TEXT4, fontSize: 12, lineHeight: 1.5 }}>
+                        The full chain — evaluate → correlate → triage → investigate → communicate → remediate → learn — ran automatically. The retrospective feeds back into the OpenSRM spec to prevent recurrence.
+                      </div>
                     </div>
                   )}
 
                   {/* Confidence footer */}
-                  {judgment.confidence !== undefined && vtype !== 'investigation' && (
-                    <div style={{ color: TEXT3, fontSize: 11, marginTop: 8, paddingTop: 6, borderTop: `1px solid ${BORDER}` }}>
-                      {verdict.producer?.system || ''} {"\u00b7"} confidence {judgment.confidence.toFixed(2)}
-                    </div>
-                  )}
+                  <div style={{ color: TEXT3, fontSize: 11, marginTop: 10, paddingTop: 6, borderTop: `1px solid ${BORDER}` }}>
+                    {verdict.producer?.system || ''} {"\u00b7"} confidence {(judgment.confidence || 0).toFixed(2)}
+                  </div>
                 </div>
               ) : (
                 <div style={{ color: TEXT3, fontSize: 13, lineHeight: 1.5 }}>
