@@ -268,9 +268,23 @@ const VERDICT_COLORS = {
   triage: '#bf616a',
   investigation: '#bf616a',
   remediation: '#bf616a',
+  communication: '#bf616a',
   retrospective: '#a3be8c',
   decision: '#81a1c1',
 };
+
+const GUIDED_STEPS = [
+  { desc: "All services healthy. NthLayer monitoring from OpenSRM specs.", type: null, anchor: null },
+  { desc: "Measure evaluating fraud-detect judgment SLO \u2014 reversal rate climbing.", type: "evaluation", matchBreach: false, anchor: "fraud-detect", eco: "nthlayer-measure" },
+  { desc: "Judgment SLO breach detected. Reversal rate exceeds target.", type: "evaluation", matchBreach: true, anchor: "fraud-detect", eco: "nthlayer-measure" },
+  { desc: "Correlate identified root cause and blast radius across dependency graph.", type: "correlation", anchor: "fraud-detect", eco: "nthlayer-correlate" },
+  { desc: "Triage assessed severity: AI model quality degradation.", type: "triage", anchor: "nthlayer-respond", eco: "nthlayer-respond" },
+  { desc: "Investigation identified root cause with high confidence.", type: "investigation", anchor: "fraud-detect", eco: "nthlayer-respond" },
+  { desc: "Communication agent drafted status page update.", type: "communication", anchor: "nthlayer-respond", eco: "nthlayer-respond" },
+  { desc: "Remediation recommended rollback \u2014 awaiting human approval.", type: "remediation", anchor: "fraud-detect", eco: "nthlayer-respond" },
+  { desc: "Retrospective captured. Spec recommendation generated. Loop closed.", type: "retrospective", anchor: "fraud-detect", eco: "nthlayer-learn" },
+  { desc: "Services recovered. All SLOs healthy.", type: null, anchor: null },
+];
 
 function lerp(a, b, t) { return a + (b - a) * t; }
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
@@ -295,6 +309,9 @@ function shortName(id) {
 function NthLayerViz() {
   const urlParams = new URLSearchParams(window.location.search);
   const isLiveMode = urlParams.get('mode') === 'live';
+  const isGuidedMode = urlParams.get('mode') === 'guided';
+  const autoAdvanceMode = urlParams.has('auto');
+  const startStep = parseInt(urlParams.get('step') || '0');
   const prometheusUrl = urlParams.get('prometheus') || 'http://localhost:9090';
   const verdictFeedUrl = urlParams.get('verdict-feed') || '/verdict-feed.json';
   const grafanaUrl = urlParams.get('grafana') || 'http://localhost:3000';
@@ -328,6 +345,13 @@ function NthLayerViz() {
   const [expandedVerdicts, setExpandedVerdicts] = useState(new Set());
   const [expandedEvents, setExpandedEvents] = useState(new Set());
   const [infraHealth, setInfraHealth] = useState({ prometheus: false, grafana: false, servicesUp: 0, servicesTotal: 8 });
+  const [guidedStep, setGuidedStep] = useState(startStep);
+  const [verdictQueue, setVerdictQueue] = useState([]);
+  const [guidedPlaying, setGuidedPlaying] = useState(false);
+  const seenVerdictIds = useRef(new Set());
+  const verdictQueueRef = useRef([]);
+  const guidedStepRef = useRef(startStep);
+  const canvasLayout = useRef({ cx: 0, cy: 0, sc: 1 });
   const mouse = useRef({ x: -999, y: -999 });
   const frame = useRef(null);
   const lt = useRef(null);
@@ -340,6 +364,95 @@ function NthLayerViz() {
     });
     st.current.particles = p;
   }, []);
+
+  // Sync refs with state for access in animate callback
+  useEffect(() => { verdictQueueRef.current = verdictQueue; }, [verdictQueue]);
+  useEffect(() => { guidedStepRef.current = guidedStep; }, [guidedStep]);
+
+  // Guided mode: auto-start canvas animation
+  useEffect(() => {
+    if (!isGuidedMode) return;
+    setStarted(true);
+    setPlaying(true);
+    st.current.playing = true;
+    // Set all services healthy at start
+    SERVICES.forEach(sv => { st.current.ht[sv.id] = 1; });
+    ECOSYSTEM.forEach(en => {
+      st.current.ecoTargetOpacity[en.id] = en.id === "nthlayer-generate" ? 0.8 : 0.3;
+    });
+  }, [isGuidedMode]);
+
+  // Guided mode: poll verdict feed and queue new verdicts
+  useEffect(() => {
+    if (!isGuidedMode) return;
+    const pollVerdicts = async () => {
+      try {
+        const resp = await fetch(verdictFeedUrl);
+        const data = await resp.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const newVerdicts = data.filter(v => v.id && !seenVerdictIds.current.has(v.id));
+          if (newVerdicts.length > 0) {
+            newVerdicts.forEach(v => seenVerdictIds.current.add(v.id));
+            setVerdictQueue(prev => [...prev, ...newVerdicts]);
+          }
+        }
+      } catch(e) { /* silently fail */ }
+    };
+    pollVerdicts();
+    const interval = setInterval(pollVerdicts, 2000);
+    return () => clearInterval(interval);
+  }, [isGuidedMode]);
+
+  // Guided mode: keyboard shortcuts
+  useEffect(() => {
+    if (!isGuidedMode) return;
+    const handler = (e) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault();
+        setGuidedStep(prev => Math.min(prev + 1, GUIDED_STEPS.length - 1));
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        setGuidedStep(prev => Math.max(prev - 1, 0));
+      } else if (e.key === 'p' || e.key === 'P') {
+        setGuidedPlaying(prev => !prev);
+      } else if (e.key === 'r' || e.key === 'R') {
+        setGuidedStep(0);
+        setGuidedPlaying(false);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [isGuidedMode]);
+
+  // Guided mode: auto-advance when playing or autoAdvanceMode
+  useEffect(() => {
+    if (!isGuidedMode) return;
+    if (!guidedPlaying && !autoAdvanceMode) return;
+    const interval = setInterval(() => {
+      setGuidedStep(prev => {
+        if (prev >= GUIDED_STEPS.length - 1) {
+          setGuidedPlaying(false);
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [isGuidedMode, guidedPlaying, autoAdvanceMode]);
+
+  // Guided mode helper: match step to verdict by type
+  function getVerdictForStep(step, queue) {
+    const stepDef = GUIDED_STEPS[step];
+    if (!stepDef || !stepDef.type) return null;
+    if (stepDef.type === 'evaluation' && stepDef.matchBreach !== undefined) {
+      return queue.find(v =>
+        v.subject?.type === 'evaluation' &&
+        (v.metadata?.custom?.breach === stepDef.matchBreach)
+      );
+    }
+    return queue.find(v => v.subject?.type === stepDef.type);
+  }
 
   // Live mode: auto-start and poll Prometheus for service health
   useEffect(() => {
@@ -620,13 +733,14 @@ function NthLayerViz() {
     const W = c.width / dpr, H = c.height / dpr;
     const cx = W / 2, cy = H / 2 + 5;
     const sc = Math.min(W / 750, H / 520) * 0.92;
+    canvasLayout.current = { cx, cy, sc };
     if (!lt.current) lt.current = ts;
     const dt = Math.min(ts - lt.current, 50); lt.current = ts;
     const s = st.current; s.time += dt;
 
     if (s.playing) {
       s.pt += dt;
-      if (!isLiveMode && s.pt >= PHASES[s.pi].dur) {
+      if (!isLiveMode && !isGuidedMode && s.pt >= PHASES[s.pi].dur) {
         if (s.pi < PHASES.length - 1) {
           s.pi++; s.pt = 0; setPhase(s.pi);
           const np = PHASES[s.pi];
@@ -664,8 +778,30 @@ function NthLayerViz() {
     }
 
     SERVICES.forEach(sv => { s.h[sv.id] = lerp(s.h[sv.id], s.ht[sv.id], 0.0025 * dt); });
-    // Dim uninvolved services during incidents
-    if (s.blastRadius && s.blastRadius.length > 0) {
+    // Guided mode: dim nodes not relevant to current step
+    const gStep = guidedStepRef.current;
+    if (isGuidedMode && gStep > 0 && gStep < GUIDED_STEPS.length - 1) {
+      const stepDef = GUIDED_STEPS[gStep];
+      const anchorNodes = stepDef.anchor ? [stepDef.anchor] : [];
+      const verdict = getVerdictForStep(gStep, verdictQueueRef.current);
+      if (verdict?.metadata?.custom?.blast_radius) {
+        verdict.metadata.custom.blast_radius.forEach(b => {
+          const svc = b.service || b;
+          if (!anchorNodes.includes(svc)) anchorNodes.push(svc);
+        });
+      }
+      SERVICES.forEach(sv => {
+        s.svcDimTarget[sv.id] = anchorNodes.length === 0 || anchorNodes.includes(sv.id) ? 1.0 : 0.2;
+      });
+      ECOSYSTEM.forEach(en => {
+        s.ecoTargetOpacity[en.id] = en.id === stepDef.eco ? 1.0 : 0.3;
+      });
+    } else if (isGuidedMode) {
+      // Step 0 or final step: all nodes visible
+      SERVICES.forEach(sv => { s.svcDimTarget[sv.id] = 1.0; });
+      ECOSYSTEM.forEach(en => { s.ecoTargetOpacity[en.id] = 0.8; });
+    } else if (s.blastRadius && s.blastRadius.length > 0) {
+      // Dim uninvolved services during incidents (live/scripted mode)
       SERVICES.forEach(sv => {
         s.svcDimTarget[sv.id] = s.blastRadius.includes(sv.id) ? 1.0 : 0.3;
       });
@@ -1070,7 +1206,7 @@ function NthLayerViz() {
   const FONT = "'JetBrains Mono',monospace";
 
   return (
-    <div style={{ width: isLiveMode && panelOpen ? "calc(100% - 360px)" : "100%", height: isLiveMode ? "100vh" : "calc(100vh - 64px)", minHeight: 400, background: BG, position: "relative", overflow: "hidden", fontFamily: FONT, transition: "width 0.3s ease" }}>
+    <div style={{ width: isLiveMode && panelOpen ? "calc(100% - 360px)" : "100%", height: (isLiveMode || isGuidedMode) ? "100vh" : "calc(100vh - 64px)", minHeight: 400, background: BG, position: "relative", overflow: "hidden", fontFamily: FONT, transition: "width 0.3s ease" }}>
       <div style={{ position: "absolute", inset: 0 }}>
         <canvas ref={canvasRef} onMouseMove={onMouse} style={{ display: "block", cursor: hovered ? "pointer" : "default" }} />
       </div>
@@ -1089,8 +1225,38 @@ function NthLayerViz() {
             fontSize: 14, fontWeight: 700, lineHeight: 1, transition: "all 0.2s",
           }}>{"\u2261"}</button>
         )}
-        {!isLiveMode && <div />}
+        {!isLiveMode && !isGuidedMode && <div />}
       </div>
+
+      {/* Guided mode: top bar */}
+      {isGuidedMode && (
+        <div style={{
+          position: "absolute", top: 0, left: 0, right: 0, zIndex: 20,
+          background: "rgba(11,17,32,0.95)", borderBottom: `1px solid ${BORDER}`,
+          padding: "12px 20px",
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#a3be8c", boxShadow: "0 0 8px #a3be8c" }} />
+              <span style={{ color: "#a3be8c", fontSize: 12, fontWeight: 700, letterSpacing: 1.5 }}>GUIDED DEMO</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ color: TEXT3, fontSize: 11 }}>Step {guidedStep + 1} of {GUIDED_STEPS.length}</span>
+              <button onClick={() => setGuidedStep(prev => Math.min(prev + 1, GUIDED_STEPS.length - 1))}
+                disabled={guidedStep >= GUIDED_STEPS.length - 1}
+                style={{
+                  background: "rgba(136,192,208,0.1)", border: `1px solid ${BORDER}`,
+                  color: guidedStep >= GUIDED_STEPS.length - 1 ? TEXT3 : TEXT1,
+                  padding: "4px 12px", borderRadius: 4, cursor: guidedStep >= GUIDED_STEPS.length - 1 ? "default" : "pointer",
+                  fontSize: 12, fontFamily: FONT,
+                }}>{"\u25b6 Next"}</button>
+            </div>
+          </div>
+          <div style={{ color: TEXT2, fontSize: 14, marginTop: 6, lineHeight: 1.4 }}>
+            {GUIDED_STEPS[guidedStep]?.desc}
+          </div>
+        </div>
+      )}
 
       {/* Phase / Live status */}
       {isLiveMode ? (
@@ -1103,7 +1269,7 @@ function NthLayerViz() {
           </div>
           <div style={{ color: TEXT3, fontSize: 9, letterSpacing: 0.3 }}>LIVE · polling {prometheusUrl} · verdict store active</div>
         </div>
-      ) : started && (
+      ) : isGuidedMode ? null : started && (
         <div style={{ position: "absolute", top: 30, left: 12, zIndex: 10, maxWidth: 680 }}>
           <div style={{ color: cp.color, fontSize: 11, fontWeight: 700, letterSpacing: 1.8, display: "flex", alignItems: "center", gap: 5 }}>
             {(cp.color === "#bf616a" || cp.color === "#ebcb8b") && <span style={{ width: 5, height: 5, borderRadius: "50%", background: cp.color, animation: "pulse 1s infinite", display: "inline-block" }} />}
@@ -1113,8 +1279,8 @@ function NthLayerViz() {
         </div>
       )}
 
-      {/* Incident legend — hidden in live mode */}
-      {!isLiveMode && (phase === 2 || phase === 3) && started && (
+      {/* Incident legend — hidden in live/guided mode */}
+      {!isLiveMode && !isGuidedMode && (phase === 2 || phase === 3) && started && (
         <div style={{ position: "absolute", top: 26, right: 12, zIndex: 10, display: "flex", flexDirection: "column", gap: 2 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
             <div style={{ width: 8, height: 2, background: INC_AI, borderRadius: 1 }} />
@@ -1127,8 +1293,8 @@ function NthLayerViz() {
         </div>
       )}
 
-      {/* Events — only shown in scripted mode (live mode uses the panel) */}
-      {events.length > 0 && !isLiveMode && (
+      {/* Events — only shown in scripted mode (live mode uses the panel, guided uses overlay cards) */}
+      {events.length > 0 && !isLiveMode && !isGuidedMode && (
         <div style={{
           position: "absolute",
           bottom: 42, left: 12, zIndex: 10, display: "flex", flexDirection: "column", gap: 2, maxWidth: "72%",
@@ -1201,18 +1367,18 @@ function NthLayerViz() {
 
       {/* Controls */}
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "7px 12px", background: `linear-gradient(to top,rgba(11,17,32,0.94),transparent)`, zIndex: 10, display: "flex", alignItems: "center", gap: 8 }}>
-        {!isLiveMode && <button onClick={toggle} style={{
+        {!isLiveMode && !isGuidedMode && <button onClick={toggle} style={{
           width: 26, height: 26, borderRadius: "50%", border: `1px solid rgba(136,192,208,0.3)`,
           background: "rgba(136,192,208,0.08)", color: TEXT1, cursor: "pointer",
           display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, flexShrink: 0, lineHeight: 1,
         }}>{!started ? "▶" : playing ? "⏸" : "▶"}</button>}
-        {!isLiveMode && started && <button onClick={go} style={{
+        {!isLiveMode && !isGuidedMode && started && <button onClick={go} style={{
           width: 20, height: 20, borderRadius: "50%", border: `1px solid ${BORDER}`,
           background: "transparent", color: TEXT3, cursor: "pointer",
           display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, flexShrink: 0,
         }}>↺</button>}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
-          {!isLiveMode && (
+          {!isLiveMode && !isGuidedMode && (
             <>
               <div style={{ display: "flex", gap: 1, height: 2 }}>
                 {PHASES.map((p, i) => {
@@ -1224,6 +1390,25 @@ function NthLayerViz() {
                 {PHASES.map((p, i) => <span key={i} style={{ fontSize: 9, color: i === phase ? TEXT4 : BORDER }}>{p.name}</span>)}
               </div>
             </>
+          )}
+          {isGuidedMode && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              <div style={{ display: "flex", gap: 1, height: 2 }}>
+                {GUIDED_STEPS.map((gs, i) => (
+                  <div key={i} style={{
+                    flex: 1, height: 2, borderRadius: 1,
+                    background: i < guidedStep ? ACCENT : i === guidedStep ? "#a3be8c" : BORDER,
+                  }} />
+                ))}
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ color: "#88c0d0", fontSize: 10, fontWeight: 600, letterSpacing: 1 }}>NTHLAYER</span>
+                <span style={{ color: TEXT3, fontSize: 9 }}>{"\u00b7"}</span>
+                <span style={{ color: TEXT3, fontSize: 9 }}>Guided step-through</span>
+                <span style={{ color: TEXT3, fontSize: 9 }}>{"\u00b7"}</span>
+                <span style={{ color: TEXT3, fontSize: 9 }}>{verdictQueue.length} verdicts queued</span>
+              </div>
+            </div>
           )}
           {isLiveMode && (
             <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
@@ -1274,7 +1459,7 @@ function NthLayerViz() {
       </div>
 
       {/* Start overlay */}
-      {!started && !isLiveMode && (
+      {!started && !isLiveMode && !isGuidedMode && (
         <div onClick={toggle} style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 20, background: "rgba(11,17,32,0.75)", backdropFilter: "blur(4px)", cursor: "pointer" }}>
           <div style={{ color: TEXT1, fontSize: 14, fontWeight: 300, letterSpacing: 3, marginBottom: 8 }}>INTELLIGENT RELIABILITY FOR COMPLEX SYSTEMS</div>
           <div style={{ color: TEXT3, fontSize: 9.5, lineHeight: 1.4, marginBottom: 24, maxWidth: 420, textAlign: "center" }}>Watch NthLayer detect, separate, and resolve two concurrent incidents across a multi-cloud topology.</div>
@@ -1284,7 +1469,7 @@ function NthLayerViz() {
       )}
 
       {/* Closing summary overlay */}
-      {finished && !isLiveMode && (
+      {finished && !isLiveMode && !isGuidedMode && (
         <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 20, background: "rgba(11,17,32,0.7)", backdropFilter: "blur(3px)" }}>
           <div style={{ color: "#a3be8c", fontSize: 10, fontWeight: 700, letterSpacing: 2, marginBottom: 16 }}>SCENARIO COMPLETE</div>
           <div style={{ display: "flex", gap: 32, marginBottom: 24 }}>
@@ -1412,6 +1597,217 @@ function NthLayerViz() {
         </div>
       )}
 
+      {/* Guided mode: bottom controls */}
+      {isGuidedMode && (
+        <div style={{
+          position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 20,
+          background: "rgba(11,17,32,0.95)", borderTop: `1px solid ${BORDER}`,
+          padding: "10px 20px", display: "flex", alignItems: "center", justifyContent: "center", gap: 12,
+        }}>
+          <button onClick={() => setGuidedStep(prev => Math.max(prev - 1, 0))}
+            disabled={guidedStep <= 0}
+            style={{
+              background: "rgba(136,192,208,0.08)", border: `1px solid ${BORDER}`,
+              color: guidedStep <= 0 ? TEXT3 : TEXT1,
+              padding: "6px 14px", borderRadius: 4, cursor: guidedStep <= 0 ? "default" : "pointer",
+              fontSize: 12, fontFamily: FONT,
+            }}>{"\u25c0 Prev"}</button>
+          <button onClick={() => setGuidedStep(prev => Math.min(prev + 1, GUIDED_STEPS.length - 1))}
+            disabled={guidedStep >= GUIDED_STEPS.length - 1}
+            style={{
+              background: "rgba(136,192,208,0.12)", border: `1px solid rgba(136,192,208,0.3)`,
+              color: guidedStep >= GUIDED_STEPS.length - 1 ? TEXT3 : TEXT1,
+              padding: "6px 14px", borderRadius: 4, cursor: guidedStep >= GUIDED_STEPS.length - 1 ? "default" : "pointer",
+              fontSize: 12, fontFamily: FONT,
+            }}>{"\u25b6 Next"}</button>
+          <button onClick={() => setGuidedPlaying(prev => !prev)}
+            style={{
+              background: guidedPlaying ? "rgba(163,190,140,0.15)" : "rgba(136,192,208,0.08)",
+              border: `1px solid ${guidedPlaying ? "rgba(163,190,140,0.3)" : BORDER}`,
+              color: guidedPlaying ? "#a3be8c" : TEXT2,
+              padding: "6px 14px", borderRadius: 4, cursor: "pointer",
+              fontSize: 12, fontFamily: FONT,
+            }}>{guidedPlaying ? "\u23f8 Pause" : "\u25b6\u25b6 Play All"}</button>
+          <button onClick={() => { setGuidedStep(0); setGuidedPlaying(false); }}
+            style={{
+              background: "rgba(136,192,208,0.08)", border: `1px solid ${BORDER}`,
+              color: TEXT2, padding: "6px 14px", borderRadius: 4, cursor: "pointer",
+              fontSize: 12, fontFamily: FONT,
+            }}>{"\u21bb Restart"}</button>
+          <span style={{ color: TEXT3, fontSize: 10, marginLeft: 12 }}>
+            Keys: {"\u2190\u2192"} navigate {"\u00b7"} Space next {"\u00b7"} P play {"\u00b7"} R restart
+          </span>
+        </div>
+      )}
+
+      {/* Guided mode: overlay card + connector */}
+      {isGuidedMode && guidedStep > 0 && guidedStep < GUIDED_STEPS.length - 1 && (() => {
+        const stepDef = GUIDED_STEPS[guidedStep];
+        const verdict = getVerdictForStep(guidedStep, verdictQueue);
+        const anchorId = stepDef.anchor;
+        if (!anchorId) return null;
+
+        const anchorNode = pos(anchorId);
+        const { cx: lcx, cy: lcy, sc: lsc } = canvasLayout.current;
+        const sx = lcx + anchorNode.x * lsc;
+        const sy = lcy + anchorNode.y * lsc;
+
+        let cardX = sx + 60;
+        let cardY = sy - 100;
+        if (cardX + 420 > window.innerWidth - 50) cardX = sx - 420 - 60;
+        if (cardY < 80) cardY = 80;
+        if (cardY + 300 > window.innerHeight - 60) cardY = window.innerHeight - 360;
+
+        const vtype = stepDef.type;
+        const vcolor = VERDICT_COLORS[vtype] || TEXT2;
+        const custom = verdict?.metadata?.custom || {};
+        const judgment = verdict?.judgment || {};
+
+        return (
+          <React.Fragment>
+            {/* Connector SVG */}
+            <svg style={{ position: "absolute", inset: 0, zIndex: 18, pointerEvents: "none" }}>
+              <line
+                x1={sx} y1={sy}
+                x2={cardX < sx ? cardX + 420 : cardX}
+                y2={cardY + 40}
+                stroke="rgba(136,192,208,0.2)" strokeWidth="1" strokeDasharray="4,3"
+              />
+            </svg>
+
+            {/* Overlay card */}
+            <div style={{
+              position: "absolute", left: cardX, top: cardY, zIndex: 19,
+              maxWidth: 420, minWidth: 280,
+              background: "rgba(11,17,32,0.95)", borderRadius: 8,
+              border: `1px solid ${vcolor}40`,
+              borderLeft: `4px solid ${vcolor}`,
+              padding: "16px 20px",
+              backdropFilter: "blur(8px)",
+              boxShadow: `0 8px 32px rgba(0,0,0,0.4), 0 0 1px ${vcolor}30`,
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <span style={{ color: vcolor, fontSize: 11, fontWeight: 700, letterSpacing: 1 }}>{vtype.toUpperCase()}</span>
+                {verdict && <span style={{ color: TEXT3, fontSize: 10 }}>{(verdict.timestamp || '').slice(11, 19)}</span>}
+              </div>
+
+              {/* Step 1 intro note */}
+              {guidedStep === 1 && !verdict && (
+                <div style={{ color: TEXT4, fontSize: 13, lineHeight: 1.5, marginBottom: 8, fontStyle: "italic" }}>
+                  Run the scenario first (<span style={{ color: ACCENT }}>./demo.sh scenario</span>), then open this page to step through the results.
+                </div>
+              )}
+
+              {verdict ? (
+                <div>
+                  {/* Summary */}
+                  <div style={{ color: TEXT2, fontSize: 14, lineHeight: 1.5, marginBottom: 10 }}>
+                    {verdict.subject?.summary || verdict.subject?.ref || ''}
+                  </div>
+
+                  {/* Type-specific details */}
+                  {vtype === 'evaluation' && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      {custom.service && <div style={{ color: TEXT3, fontSize: 13 }}>Service: <span style={{ color: TEXT2 }}>{custom.service}</span></div>}
+                      {custom.slo_name && <div style={{ color: TEXT3, fontSize: 13 }}>SLO: <span style={{ color: TEXT2 }}>{custom.slo_name}</span></div>}
+                      {custom.current_value !== undefined && custom.target !== undefined && (
+                        <div style={{ color: TEXT3, fontSize: 13 }}>
+                          Current: <span style={{ color: custom.breach ? '#bf616a' : '#a3be8c', fontWeight: 600 }}>{(custom.current_value * 100).toFixed(1)}%</span>
+                          {" "} Target: <span style={{ color: TEXT2 }}>{(custom.target * 100).toFixed(1)}%</span>
+                        </div>
+                      )}
+                      <div style={{ color: custom.breach ? '#bf616a' : '#a3be8c', fontSize: 13, fontWeight: 600 }}>
+                        {custom.breach ? '\u26a0 BREACH' : '\u2713 Within target'}
+                        {custom.consecutive !== undefined && ` \u00b7 Consecutive: ${custom.consecutive}`}
+                      </div>
+                    </div>
+                  )}
+
+                  {vtype === 'correlation' && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      {custom.root_causes?.length > 0 && (
+                        <div style={{ color: TEXT3, fontSize: 13 }}>Root cause: <span style={{ color: '#ebcb8b' }}>{custom.root_causes[0].service || '?'} ({custom.root_causes[0].type || '?'})</span></div>
+                      )}
+                      {custom.blast_radius?.length > 0 && (
+                        <div style={{ color: TEXT3, fontSize: 13 }}>Blast radius: <span style={{ color: TEXT2 }}>{custom.blast_radius.map(b => b.service || b).join(', ')}</span></div>
+                      )}
+                      {custom.reasoning && <div style={{ color: TEXT4, fontSize: 12, marginTop: 4, lineHeight: 1.4 }}>{custom.reasoning}</div>}
+                    </div>
+                  )}
+
+                  {vtype === 'triage' && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      {custom.severity && <div style={{ color: TEXT3, fontSize: 13 }}>Severity: <span style={{ color: custom.severity === 'critical' ? '#bf616a' : '#ebcb8b', fontWeight: 600 }}>{custom.severity}</span></div>}
+                      {custom.team && <div style={{ color: TEXT3, fontSize: 13 }}>Team: <span style={{ color: TEXT2 }}>{custom.team}</span></div>}
+                      {custom.affected_slos?.length > 0 && (
+                        <div style={{ color: TEXT3, fontSize: 13 }}>Affected SLOs: <span style={{ color: TEXT2 }}>{custom.affected_slos.join(', ')}</span></div>
+                      )}
+                    </div>
+                  )}
+
+                  {vtype === 'investigation' && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      {custom.root_cause && <div style={{ color: TEXT3, fontSize: 13 }}>Root cause: <span style={{ color: TEXT2 }}>{custom.root_cause}</span></div>}
+                      {judgment.confidence !== undefined && (
+                        <div style={{ color: TEXT3, fontSize: 13 }}>Confidence: <span style={{ color: judgment.confidence > 0.8 ? '#a3be8c' : '#ebcb8b', fontWeight: 600 }}>{(judgment.confidence * 100).toFixed(0)}%</span></div>
+                      )}
+                      {custom.hypotheses?.length > 0 && (
+                        <div style={{ color: TEXT4, fontSize: 12, marginTop: 4 }}>
+                          {custom.hypotheses.slice(0, 3).map((h, i) => <div key={i}>- {h}</div>)}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {vtype === 'communication' && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      {custom.title && <div style={{ color: TEXT3, fontSize: 13 }}>Status page: <span style={{ color: TEXT2 }}>{custom.title}</span></div>}
+                    </div>
+                  )}
+
+                  {vtype === 'remediation' && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      {custom.action && <div style={{ color: TEXT3, fontSize: 13 }}>Action: <span style={{ color: TEXT2 }}>{custom.action}</span></div>}
+                      {custom.rationale && <div style={{ color: TEXT4, fontSize: 12, lineHeight: 1.4 }}>{custom.rationale}</div>}
+                      {custom.approval_status && (
+                        <div style={{ color: custom.approval_status === 'approved' ? '#a3be8c' : '#ebcb8b', fontSize: 13, fontWeight: 600 }}>
+                          {custom.approval_status === 'approved' ? '\u2713 Approved' : '\u23f3 ' + custom.approval_status}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {vtype === 'retrospective' && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      {custom.duration_minutes && <div style={{ color: TEXT3, fontSize: 13 }}>Duration: <span style={{ color: TEXT2 }}>{custom.duration_minutes.toFixed(0)}m</span></div>}
+                      {custom.decisions_affected !== undefined && <div style={{ color: TEXT3, fontSize: 13 }}>Decisions affected: <span style={{ color: TEXT2 }}>{custom.decisions_affected}</span></div>}
+                      {custom.verdict_count !== undefined && <div style={{ color: TEXT3, fontSize: 13 }}>Verdict count: <span style={{ color: TEXT2 }}>{custom.verdict_count}</span></div>}
+                      {custom.recommendation && <div style={{ color: '#a3be8c', fontSize: 13, marginTop: 4 }}>{custom.recommendation}</div>}
+                    </div>
+                  )}
+
+                  {/* Confidence footer */}
+                  {judgment.confidence !== undefined && vtype !== 'investigation' && (
+                    <div style={{ color: TEXT3, fontSize: 11, marginTop: 8, paddingTop: 6, borderTop: `1px solid ${BORDER}` }}>
+                      {verdict.producer?.system || ''} {"\u00b7"} confidence {judgment.confidence.toFixed(2)}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div style={{ color: TEXT3, fontSize: 13, lineHeight: 1.5 }}>
+                  Waiting for verdict...
+                  {guidedStep === 1 && (
+                    <div style={{ color: TEXT4, fontSize: 12, marginTop: 8 }}>
+                      No verdicts found yet. Run <span style={{ color: ACCENT }}>./demo.sh scenario</span> to generate verdicts, then refresh this page.
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </React.Fragment>
+        );
+      })()}
+
       <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}`}</style>
     </div>
   );
@@ -1486,12 +1882,14 @@ function SiteFooter() {
 }
 
 function DemoPage() {
-  const isLive = new URLSearchParams(window.location.search).get('mode') === 'live';
+  const params = new URLSearchParams(window.location.search);
+  const isLive = params.get('mode') === 'live';
+  const isGuided = params.get('mode') === 'guided';
   return (
     <div style={{ background: "#0B1120", minHeight: "100vh" }}>
-      {!isLive && <SiteNav />}
+      {!isLive && !isGuided && <SiteNav />}
       <NthLayerViz />
-      {!isLive && <SiteFooter />}
+      {!isLive && !isGuided && <SiteFooter />}
     </div>
   );
 }
