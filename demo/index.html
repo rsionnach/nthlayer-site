@@ -1731,7 +1731,7 @@ function NthLayerViz() {
                       {custom.blast_radius?.length > 0 && (
                         <div style={{ color: TEXT3, fontSize: 13 }}>Blast radius: <span style={{ color: TEXT2 }}>{custom.blast_radius.map(b => b.service || b).join(', ')}</span></div>
                       )}
-                      {custom.reasoning && <div style={{ color: TEXT4, fontSize: 12, marginTop: 4, lineHeight: 1.4 }}>{custom.reasoning}</div>}
+                      {custom.reasoning && <div style={{ color: TEXT4, fontSize: 12, marginTop: 4, lineHeight: 1.4 }}>{typeof custom.reasoning === 'string' ? custom.reasoning : custom.reasoning.overall_assessment || JSON.stringify(custom.reasoning).slice(0, 200)}</div>}
                     </div>
                   )}
 
