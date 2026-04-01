@@ -313,7 +313,7 @@ function NthLayerViz() {
   const autoAdvanceMode = urlParams.has('auto');
   const startStep = parseInt(urlParams.get('step') || '0');
   const prometheusUrl = urlParams.get('prometheus') || 'http://localhost:9090';
-  const verdictFeedUrl = urlParams.get('verdict-feed') || '/verdict-feed.json';
+  const verdictFeedUrl = urlParams.get('verdict-feed') || 'verdict-feed.json';
   const grafanaUrl = urlParams.get('grafana') || 'http://localhost:3000';
 
   const canvasRef = useRef(null);
