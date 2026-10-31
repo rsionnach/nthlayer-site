@@ -1,1649 +1,867 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NthLayer — Defense-in-depth for AI agent systems</title>
-    <meta name="description" content="NthLayer is defense-in-depth for AI agent systems. Measure judgment quality. Gate deploys on decision accuracy. Respond to incidents. Close the loop.">
-    <meta property="og:title" content="NthLayer — Defense-in-depth for AI agent systems">
-    <meta property="og:description" content="Measure judgment quality. Gate deploys on decision accuracy. Respond to incidents. Close the loop.">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://nthlayer.io">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #0B1120; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NthLayer — Your dashboards say it's up. NthLayer tells you whether it was right.</title>
+<meta name="description" content="Agents, rules and people make calls that no test can check. NthLayer records each one, waits for the outcome, and turns how often they hold up into SLOs and alerts in the Prometheus and Grafana you already run.">
+<meta name="theme-color" content="#0B1120">
+<link rel="canonical" href="https://nthlayer.io/">
+<meta property="og:title" content="NthLayer — Your dashboards say it's up. NthLayer tells you whether it was right.">
+<meta property="og:description" content="NthLayer records every decision no test can check, waits for the outcome, and turns how often they hold up into SLOs and alerts.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://nthlayer.io">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="NthLayer — Your dashboards say it's up. NthLayer tells you whether it was right.">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Instrument+Serif&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: dark;
+
+  --bg: #0B1120;
+  --bg-band: #0D1424;
+  --bg-sunk: #080E1A;
+  --bg-raised: #101827;
+  --bg-nav: rgba(11, 17, 32, 0.86);
+  --line: #1E2A3A;
+  --line-strong: #2A3A4E;
+  --text: #F0F0F3;
+  --text-body: #A8B0BD;
+  --text-muted: #7D8BA1;
+  --code: #C9D1DC;
+  --frost: #88C0D0;
+  --frost-2: #81A1C1;
+  --frost-3: #5E81AC;
+  --held: #A3BE8C;
+  --reversed: #D0737C;
+  --overridden: #EBCB8B;
+  --purple: #B48EAD;
+
+  --serif: 'Instrument Serif', Georgia, serif;
+  --sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --gutter: clamp(16px, 5vw, 48px);
+  --wrap: 1120px;
+  --act-gap: clamp(88px, 12vw, 160px);
+  --section-gap: clamp(64px, 8vw, 104px);
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 80px; scrollbar-color: var(--line-strong) var(--bg); }
+body {
+  background: var(--bg);
+  color: var(--text-body);
+  font: 400 17px/1.65 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+::selection { background: rgba(136, 192, 208, 0.28); color: var(--text); }
+a { color: var(--frost); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+a:hover { color: var(--text); }
+:focus-visible { outline: 2px solid var(--frost); outline-offset: 3px; border-radius: 4px; }
+code, pre, kbd { font-family: var(--mono); font-size: 0.86em; }
+:not(pre) > code { white-space: nowrap; color: var(--text); background: var(--bg-raised); padding: 0.1em 0.4em; border-radius: 4px; border: 1px solid var(--line); }
+img { display: block; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+
+.skip { position: absolute; left: -9999px; top: 8px; background: var(--text); color: var(--bg); padding: 8px 14px; border-radius: 6px; z-index: 200; }
+.skip:focus { left: 8px; }
+.skip:hover { color: var(--bg); }
+
+.wrap { max-width: var(--wrap); margin: 0 auto; padding: 0 var(--gutter); }
+
+h1, h2, h3 { color: var(--text); font-weight: 400; text-wrap: balance; }
+h2 { font-family: var(--serif); font-size: clamp(2rem, 4.2vw, 3rem); line-height: 1.08; letter-spacing: -0.01em; margin-bottom: 20px; }
+h3 { font-family: var(--sans); font-size: 1.05rem; font-weight: 600; line-height: 1.35; margin-bottom: 8px; }
+p, dd, li, figcaption { text-wrap: pretty; }
+.lede { font-size: 1.15rem; color: var(--text-body); max-width: 62ch; }
+.prose { max-width: 66ch; }
+.prose p + p { margin-top: 1em; }
+
+/* Acts: the page reads as four movements. Tight inside an act, a clear break between acts. */
+.act { padding: var(--act-gap) 0; border-top: 1px solid var(--line); }
+.act.band { background: var(--bg-band); }
+.act > section + section { margin-top: var(--section-gap); }
+
+/* ── Nav ─────────────────────────────────────────── */
+.nav {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--bg-nav);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+.nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); font-weight: 600; font-size: 1.25rem; letter-spacing: -0.01em; }
+.brand img { width: 28px; height: 28px; border-radius: 6px; object-fit: cover; }
+.nav-links { display: flex; align-items: center; gap: 28px; list-style: none; }
+.nav-links a { color: var(--text-body); text-decoration: none; font-size: 0.94rem; }
+.nav-links a:hover { color: var(--text); }
+.nav-links .gh { color: var(--text); border: 1px solid var(--line-strong); padding: 7px 14px; border-radius: 8px; }
+.nav-links .gh:hover { border-color: var(--frost-3); }
+.nav-menu { display: none; }
+
+/* ── Hero ────────────────────────────────────────── */
+.act.hero-act { padding-top: clamp(48px, 7vw, 88px); border-top: 0; }
+.hero h1 {
+  font-family: var(--serif);
+  font-size: clamp(2.5rem, 5.4vw, 4.6rem);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  margin-bottom: 24px;
+}
+.hero h1 .turn { display: block; color: var(--frost); }
+.hero .lede { margin-bottom: 36px; }
+
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 24px; }
+.install {
+  display: inline-flex; align-items: center; gap: 14px;
+  background: var(--bg-sunk); border: 1px solid var(--line-strong); border-radius: 10px;
+  padding: 6px 6px 6px 18px; font-family: var(--mono); font-size: 0.92rem; color: var(--text);
+  max-width: 100%;
+}
+.install .prompt { color: var(--text-muted); user-select: none; }
+.install code { background: none; border: 0; padding: 0; font-size: 1em; white-space: nowrap; overflow-x: auto; }
+.copy {
+  font: 500 0.82rem var(--sans); color: var(--bg); background: var(--frost);
+  border: 0; border-radius: 7px; padding: 8px 14px; min-height: 36px; cursor: pointer; flex: none;
+  transition: background 0.2s var(--ease);
+}
+.copy:hover { background: var(--text); color: var(--bg); }
+.copy[data-done] { background: var(--held); }
+.textlink { font-size: 0.98rem; text-decoration: none; }
+.textlink:hover { text-decoration: underline; }
+
+/* Decision ledger: the one animated moment */
+.ledger {
+  margin-top: clamp(48px, 6vw, 72px);
+  background: var(--bg-sunk);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.6);
+}
+.ledger-head {
+  display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px;
+  padding: 16px 22px; border-bottom: 1px solid var(--line);
+  font-family: var(--mono); font-size: 0.8rem; color: var(--text-muted);
+}
+.ledger-head strong { color: var(--text); font-weight: 500; }
+.rate { color: var(--text); font-variant-numeric: tabular-nums; }
+.rate b { font-weight: 500; transition: color 0.6s var(--ease); }
+.rate.up b { color: var(--reversed); }
+.ledger table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+.ledger th { text-align: left; font: 500 0.74rem var(--mono); color: var(--text-muted); padding: 12px 22px 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+.ledger td { padding: 13px 22px; border-top: 1px solid var(--line); vertical-align: top; }
+.ledger td.t, .ledger td.c { font-family: var(--mono); font-size: 0.84rem; color: var(--text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ledger td.who { color: var(--text); white-space: nowrap; }
+.ledger td.who span { display: block; font-size: 0.8rem; color: var(--text-muted); }
+.ledger td.what { color: var(--text-body); }
+.verdict { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; font: 500 0.8rem var(--mono); white-space: nowrap; }
+.verdict::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: none; }
+.v-confirmed { color: var(--held); }
+.v-overridden { color: var(--reversed); }
+.v-partial { color: var(--overridden); }
+.v-expired { color: var(--text-muted); }
+.v-expired::before { background: transparent; border: 1.5px dashed currentColor; }
+.v-pending { color: var(--frost-2); }
+.v-pending::before { background: transparent; border: 1.5px solid currentColor; }
+.verdict small { flex-basis: 100%; padding-left: 16px; font: 400 0.76rem var(--sans); color: var(--text-muted); white-space: normal; }
+.row-live { transition: background-color 0.8s var(--ease); }
+.row-live.settled { background-color: rgba(208, 115, 124, 0.07); }
+.ledger-foot { padding: 12px 22px; border-top: 1px solid var(--line); font-size: 0.8rem; color: var(--text-muted); }
+
+/* ── Thesis ──────────────────────────────────────── */
+.thesis .wrap { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: clamp(32px, 6vw, 96px); align-items: start; }
+.thesis h2 { font-size: clamp(2.1rem, 4.6vw, 3.4rem); margin: 0; }
+.thesis h2 em { font-style: normal; color: var(--frost); }
+
+/* ── AI SRE ──────────────────────────────────────── */
+.sre-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(32px, 6vw, 88px); align-items: start; margin-top: 8px; }
+.timeline { list-style: none; position: relative; }
+.timeline li { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 20px; padding: 0 0 28px; position: relative; }
+.timeline li::after { content: ""; position: absolute; left: 83px; top: 12px; bottom: 0; width: 1px; background: var(--line-strong); z-index: 0; }
+.timeline li:last-child::after { display: none; }
+.timeline time { font: 500 0.86rem var(--mono); color: var(--text-muted); padding-top: 2px; font-variant-numeric: tabular-nums; }
+.timeline .body { position: relative; padding-left: 22px; }
+.timeline .body::before { content: ""; position: absolute; left: -4px; top: 9px; width: 9px; height: 9px; border-radius: 50%; background: var(--dot, var(--frost-2)); box-shadow: 0 0 0 4px var(--bg-band); z-index: 1; }
+.timeline p { color: var(--text-body); }
+.timeline p strong { color: var(--text); font-weight: 500; }
+.timeline .effect { display: block; margin-top: 4px; font: 400 0.84rem var(--mono); color: var(--dot, var(--frost-2)); }
+.demo-link { display: inline-block; margin-top: 12px; font-weight: 500; text-decoration: none; }
+.demo-link:hover { text-decoration: underline; }
+.scenario-note { font-size: 0.82rem; color: var(--text-muted); margin: -8px 0 0 84px; }
+
+/* ── Signals ─────────────────────────────────────── */
+.gauges { list-style: none; margin-top: 44px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(24px, 4vw, 48px); }
+.gauge { display: flex; flex-direction: column; }
+.gauge h3 { margin-bottom: 6px; }
+.gauge p { font-size: 0.95rem; }
+.meter { margin-top: auto; padding-top: 20px; }
+.meter-track { position: relative; height: 6px; border-radius: 3px; background: var(--line); }
+.meter-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: var(--held); }
+.meter-fill.over { background: var(--reversed); }
+/* Scale is 0 to 2x target, so the target mark sits at the midpoint. */
+.meter-target { position: absolute; left: 50%; top: -5px; bottom: -5px; width: 2px; background: var(--text); border-radius: 1px; }
+.meter-read { display: flex; justify-content: space-between; gap: 12px; margin-top: 10px; font: 400 0.8rem var(--mono); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.meter-read b { font-weight: 500; color: var(--text); }
+.meter-read b.over { color: var(--reversed); }
+.signals-more { margin-top: 40px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 clamp(24px, 4vw, 48px); }
+.signals-more div { padding-top: 18px; border-top: 1px solid var(--line); }
+.signals-more dt { color: var(--text); font-weight: 600; margin-bottom: 4px; }
+.signals-more dd { font-size: 0.95rem; }
+.example-note { margin-top: 20px; font-size: 0.82rem; color: var(--text-muted); }
+
+/* ── How it works ────────────────────────────────── */
+.steps { margin-top: 56px; display: grid; gap: clamp(56px, 8vw, 88px); }
+.step { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: clamp(28px, 5vw, 72px); align-items: start; }
+.step h3 { font-family: var(--serif); font-size: 2rem; font-weight: 400; margin-bottom: 12px; }
+.step p + p { margin-top: 0.9em; }
+pre.code {
+  background: var(--bg-sunk); border: 1px solid var(--line); border-radius: 12px;
+  padding: 20px 22px; overflow-x: auto; color: var(--code); font-size: 0.82rem; line-height: 1.7;
+  tab-size: 2;
+}
+pre.code + .file { margin-top: 20px; }
+pre.code .k { color: var(--frost-2); }
+pre.code .s { color: var(--held); }
+pre.code .n { color: var(--purple); }
+pre.code .c { color: var(--text-muted); }
+pre.code .p { color: var(--text-muted); user-select: none; }
+.file { display: block; font: 400 0.78rem var(--mono); color: var(--text-muted); margin-bottom: 8px; }
+.more-link { display: inline-block; margin-top: 12px; font-size: 0.9rem; }
+
+/* Runtime tiers */
+.tiers + .file { margin-top: 20px; }
+.tiers { list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.tiers li.side { grid-column: 1 / -1; }
+.tiers .node { height: 100%; }
+.tiers .node code { background: none; border: 0; padding: 0; color: var(--frost); font-size: 0.86rem; font-weight: 500; }
+.tiers .tier-label { display: block; font: 400 0.72rem var(--mono); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+.tiers .side .node { border-style: dashed; }
+
+/* ── Diagram (shared node + arrow parts) ─────────── */
+.diagram { background: var(--bg-sunk); border: 1px solid var(--line); border-radius: 14px; padding: clamp(20px, 3.5vw, 40px); }
+.node {
+  background: var(--bg-raised); border: 1px solid var(--line-strong); border-radius: 10px;
+  padding: 12px 16px; color: var(--text); font-weight: 500; font-size: 0.95rem; line-height: 1.4;
+}
+.node span { display: block; font-weight: 400; font-size: 0.82rem; color: var(--text-muted); margin-top: 2px; }
+.node.nth { border-color: var(--frost); box-shadow: 0 0 0 4px rgba(136, 192, 208, 0.08); }
+.node.nth b { color: var(--frost); font-weight: 600; }
+.node.out { border-color: rgba(235, 203, 139, 0.5); }
+.node.dst { border-style: dashed; }
+.arrow { display: flex; align-items: center; gap: 10px; font: 400 0.78rem var(--mono); color: var(--text-muted); }
+.arrow.down { padding: 6px 0 6px 20px; }
+.arrow svg { flex: none; color: var(--text-muted); }
+.arrow.tone-out, .arrow.tone-out svg { color: var(--overridden); }
+
+/* Where it sits: can a machine say no? */
+.sits-a { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: 0; margin-top: 48px; }
+.sits-a .q { grid-column: 1 / -1; font-family: var(--serif); font-size: clamp(1.5rem, 2.6vw, 2rem); color: var(--text); margin-bottom: 20px; line-height: 1.15; }
+.sits-a .col { padding: 20px 0 4px; border-top: 1px solid var(--line-strong); }
+.sits-a .col + .col { padding-left: clamp(20px, 3.5vw, 40px); border-left: 1px solid var(--line-strong); }
+.sits-a .col:first-of-type { padding-right: clamp(20px, 3.5vw, 40px); }
+.sits-a .ans { font: 500 0.82rem var(--mono); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; }
+.sits-a .ans.yes { color: var(--held); }
+.sits-a .ans.no { color: var(--frost); }
+.checks { list-style: none; display: flex; flex-wrap: wrap; gap: 8px 16px; margin-bottom: 16px; }
+.checks li { font-size: 0.92rem; color: var(--text-body); }
+.checks li::before { content: "✓"; color: var(--held); margin-right: 6px; }
+.sits-a .verdict-line { font-size: 0.92rem; color: var(--text-muted); }
+.sits-a .verdict-line strong { color: var(--held); font-weight: 500; }
+.flow-mid { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 0; }
+.arrow.left { padding: 0 10px; flex-direction: column; gap: 4px; }
+
+.sits-notes { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(32px, 5vw, 64px); margin-top: 40px; align-items: start; }
+.sits-notes h3 { margin-bottom: 14px; }
+.needs { padding-left: 1.4em; display: grid; gap: 10px; font-size: 0.95rem; }
+.needs li::marker { color: var(--frost); font-family: var(--mono); font-size: 0.85em; }
+.needs strong { color: var(--text); font-weight: 600; }
+.sits-asides { list-style: none; display: grid; gap: 18px; }
+.sits-asides li { padding-top: 16px; border-top: 1px solid var(--line); font-size: 0.95rem; }
+.sits-asides strong { display: block; color: var(--text); font-weight: 600; margin-bottom: 4px; }
+
+/* ── Status ──────────────────────────────────────── */
+.status { list-style: none; margin-top: 36px; border-top: 1px solid var(--line-strong); }
+.status li { display: grid; grid-template-columns: minmax(0, 15rem) 8rem minmax(0, 1fr); gap: 4px 20px; align-items: baseline; padding: 14px 0; border-bottom: 1px solid var(--line); font-size: 0.95rem; }
+.status a { font-family: var(--mono); font-size: 0.88rem; }
+.tag { justify-self: start; font: 500 0.74rem var(--mono); text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; }
+.tag.stable { color: var(--held); }
+.tag.impl { color: var(--frost); }
+.tag.early { color: var(--overridden); }
+
+/* ── Start ───────────────────────────────────────── */
+.start-main { margin-top: 32px; display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: clamp(32px, 6vw, 80px); align-items: start; }
+.start-main .install { margin-bottom: 14px; }
+.start-main details { margin-top: 20px; }
+.start-main summary { cursor: pointer; color: var(--frost); font-weight: 500; }
+.start-main summary:hover { color: var(--text); }
+.start-main details pre { margin-top: 14px; }
+.paths { list-style: none; display: grid; gap: 0; }
+.paths li { padding: 14px 0; border-top: 1px solid var(--line); }
+.paths li:last-child { border-bottom: 1px solid var(--line); }
+.paths strong { display: block; color: var(--text); font-weight: 600; margin-bottom: 2px; }
+
+/* ── Footer ──────────────────────────────────────── */
+footer { border-top: 1px solid var(--line); padding: 40px 0 56px; font-size: 0.9rem; color: var(--text-muted); }
+footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px 32px; }
+footer ul { list-style: none; display: flex; flex-wrap: wrap; gap: 4px 24px; }
+footer a { display: inline-block; padding: 6px 0; color: var(--text-body); text-decoration: none; }
+footer a:hover { color: var(--text); }
+
+/* ── Responsive ──────────────────────────────────── */
+@media (max-width: 1100px) {
+  .tiers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tiers li.side { grid-column: auto; }
+}
+@media (max-width: 900px) {
+  .thesis .wrap, .sre-grid, .step, .start-main { grid-template-columns: minmax(0, 1fr); }
+  .sits-a { grid-template-columns: minmax(0, 1fr); }
+  .sits-a .col + .col { padding-left: 0; border-left: 0; }
+  .sits-a .col:first-of-type { padding-right: 0; padding-bottom: 20px; }
+  .gauges, .signals-more { grid-template-columns: minmax(0, 1fr); }
+  .signals-more div + div { margin-top: 18px; }
+  .scenario-note { margin-left: 0; }
+
+  /* Ledger becomes stacked rows. Header row stays for screen readers; roles keep table semantics. */
+  .ledger thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .ledger table, .ledger tbody, .ledger tr, .ledger td { display: block; }
+  .ledger tbody tr { padding: 14px 18px; border-top: 1px solid var(--line); display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; }
+  .ledger td { padding: 0; border: 0; }
+  .ledger td.t { grid-column: 1; }
+  .ledger td.who { grid-column: 2; }
+  .ledger td.what { grid-column: 1 / -1; }
+  .ledger td.c { grid-column: 1; }
+  .ledger td.c::before { content: attr(data-label) " "; }
+  .ledger td.v { grid-column: 2; }
+  .ledger-head, .ledger-foot { padding-left: 18px; padding-right: 18px; }
+}
+@media (max-width: 760px) {
+  body { font-size: 16px; }
+  .nav-links { display: none; }
+  .nav-menu { display: block; position: relative; }
+  .nav-menu summary { list-style: none; cursor: pointer; color: var(--text); border: 1px solid var(--line-strong); border-radius: 8px; padding: 0 16px; min-height: 44px; display: flex; align-items: center; font-size: 0.94rem; }
+  .nav-menu summary::-webkit-details-marker { display: none; }
+  .nav-menu ul { list-style: none; position: absolute; right: 0; top: calc(100% + 8px); background: var(--bg-raised); border: 1px solid var(--line-strong); border-radius: 10px; padding: 8px; min-width: 200px; box-shadow: 0 16px 40px -12px rgba(0,0,0,0.7); }
+  .nav-menu li a { display: block; padding: 10px 12px; color: var(--text); text-decoration: none; border-radius: 6px; }
+  .nav-menu li a:hover { background: var(--line); }
+  .node { padding: 10px 12px; font-size: 0.88rem; }
+  .node span { font-size: 0.8rem; }
+  .arrow.left { padding: 0 6px; }
+  .arrow.left svg { width: 20px; }
+  .diagram { padding: 18px 14px; }
+  .sits-notes { grid-template-columns: minmax(0, 1fr); }
+  .tiers { grid-template-columns: minmax(0, 1fr); }
+  .status li { grid-template-columns: auto 1fr; }
+  .status li .note { grid-column: 1 / -1; color: var(--text-muted); font-size: 0.9rem; }
+  .status a { display: inline-block; padding: 4px 0; }
+  .install { width: 100%; font-size: 0.8rem; gap: 10px; padding-left: 14px; }
+  .install code { flex: 1; min-width: 0; }
+  .copy { min-height: 40px; }
+
+  .timeline li { grid-template-columns: 52px minmax(0, 1fr); gap: 14px; }
+  .timeline li::after { left: 66px; }
+}
+@media (max-width: 360px) {
+  .install { font-size: 0.72rem; padding-left: 10px; gap: 8px; }
+  .install .prompt { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+</style>
 </head>
 <body>
-<div id="root"></div>
-<script type="text/babel" data-type="module">
-const { useState, useEffect, useRef, useCallback } = React;
+<a class="skip" href="#main">Skip to content</a>
 
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="/" aria-label="NthLayer home">
+      <img src="/logo.jpg" alt="" width="28" height="28">
+      NthLayer
+    </a>
+    <nav aria-label="Primary">
+      <ul class="nav-links">
+        <li><a href="#sre">AI SRE</a></li>
+        <li><a href="#how">How it works</a></li>
+        <li><a href="/demo">Demo</a></li>
+        <li><a href="/research">Research</a></li>
+        <li><a class="gh" href="https://github.com/rsionnach/nthlayer">GitHub</a></li>
+      </ul>
+      <details class="nav-menu">
+        <summary>Menu</summary>
+        <ul>
+          <li><a href="#sre">AI SRE</a></li>
+          <li><a href="#how">How it works</a></li>
+          <li><a href="/demo">Demo</a></li>
+          <li><a href="/research">Research</a></li>
+          <li><a href="https://github.com/rsionnach/nthlayer">GitHub</a></li>
+        </ul>
+      </details>
+    </nav>
+  </div>
+</header>
 
+<main id="main">
 
-const COMPONENTS = [
-  {
-    id: "define",
-    label: "SPEC",
-    name: "Specification",
-    codename: "OpenSRM",
-    color: "#81a1c1",
-    desc: "One manifest declares the contract",
-    detail: "Every service gets a reliability manifest. Availability targets, judgment SLOs for AI agents, dependency maps, cost budgets. One YAML file is the single source of truth for what reliable means.",
-    code: `# service.reliability.yaml
-service:
-  name: loan-approval-agent
-  tier: critical
+<!-- Act 1: the problem -->
+<div class="act hero-act">
 
-slos:
-  - type: availability
-    target: 0.999
-    window: 30d
-  - type: ai-gate
-    metric: judgment_reversal_rate
-    target: 0.05
-    window: 30d
-    
-dependencies:
-  - name: credit-scoring-service
-    criticality: critical
-    slo_ref: credit-scoring/slos/availability`,
+<section class="hero" aria-label="Introduction">
+  <div class="wrap">
+    <h1>Your dashboards say it’s up. <span class="turn">NthLayer tells you whether it was right.</span></h1>
+    <p class="lede">Agents, rules and people make calls that no test can check: a triage, an approval, a release. NthLayer records each one, waits for the outcome, and turns how often they hold up into SLOs and alerts in the Prometheus and Grafana you already run.</p>
+    <div class="actions">
+      <div class="install">
+        <span class="prompt" aria-hidden="true">$</span>
+        <code id="install-cmd">pip install nthlayer-generate</code>
+        <button class="copy" type="button" data-copy="install-cmd" aria-label="Copy install command">Copy</button>
+      </div>
+      <a class="textlink" href="#sre">Measure your AI SRE →</a>
+    </div>
+    <p class="sr-only" role="status" aria-live="polite" id="copy-status"></p>
+
+    <figure class="ledger" aria-labelledby="ledger-cap">
+      <div class="ledger-head">
+        <span id="ledger-cap"><strong>Verdicts</strong> · last hour · example data</span>
+        <span class="rate up" id="rate">reversal rate, 7d: <b id="rate-val">3.1%</b> <span aria-hidden="true">/</span> target ≤ 5%</span>
+      </div>
+      <table role="table">
+        <thead role="rowgroup">
+          <tr role="row"><th role="columnheader" scope="col">Time</th><th role="columnheader" scope="col">Decided by</th><th role="columnheader" scope="col">Decision</th><th role="columnheader" scope="col">Confidence</th><th role="columnheader" scope="col">Outcome</th></tr>
+        </thead>
+        <tbody role="rowgroup">
+          <tr role="row" class="row-live settled" id="live-row">
+            <td role="cell" class="t">02:14</td>
+            <td role="cell" class="who">triage-agent<span>AI SRE</span></td>
+            <td role="cell" class="what">Marked <code>checkout-api 5xx</code> alert as noise and suppressed it</td>
+            <td role="cell" class="c" data-label="conf">0.92</td>
+            <td role="cell" class="v"><span class="verdict v-overridden" id="live-verdict">overridden<small>by on-call, in Slack</small></span></td>
+          </tr>
+          <tr role="row">
+            <td role="cell" class="t">02:09</td>
+            <td role="cell" class="who">release-gate<span>rule engine</span></td>
+            <td role="cell" class="what">Approved deploy <code>payments v4.12</code></td>
+            <td role="cell" class="c" data-label="conf">—</td>
+            <td role="cell" class="v"><span class="verdict v-confirmed">confirmed</span></td>
+          </tr>
+          <tr role="row">
+            <td role="cell" class="t">01:58</td>
+            <td role="cell" class="who">refund-approver<span>model</span></td>
+            <td role="cell" class="what">Approved refund for order #88213</td>
+            <td role="cell" class="c" data-label="conf">0.67</td>
+            <td role="cell" class="v"><span class="verdict v-overridden">overridden<small>by a reviewer, in Jira</small></span></td>
+          </tr>
+          <tr role="row">
+            <td role="cell" class="t">01:52</td>
+            <td role="cell" class="who">cleanup-agent<span>model</span></td>
+            <td role="cell" class="what">Deleted 412 stale preview environments</td>
+            <td role="cell" class="c" data-label="conf">0.88</td>
+            <td role="cell" class="v"><span class="verdict v-partial">partial<small>owners restored 3</small></span></td>
+          </tr>
+          <tr role="row">
+            <td role="cell" class="t">01:47</td>
+            <td role="cell" class="who">a.murphy<span>human approver</span></td>
+            <td role="cell" class="what">Approved schema migration <code>orders_v7</code></td>
+            <td role="cell" class="c" data-label="conf">—</td>
+            <td role="cell" class="v"><span class="verdict v-expired">expired<small>no outcome within 24h</small></span></td>
+          </tr>
+        </tbody>
+      </table>
+      <figcaption class="ledger-foot">Each row is a verdict: NthLayer’s record of one decision. The decision is written once; its outcome is settled once, later.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="thesis" aria-labelledby="thesis-h">
+  <div class="wrap">
+    <h2 id="thesis-h">Back pressure for decisions that have <em>no compiler.</em></h2>
+    <div class="prose">
+      <p>Pipelines scale by turning judgment into verification. A type checker, a test suite or a simulator says no, and the loop moves on.</p>
+      <p>Whatever can’t be verified that way is still a decision: a release, a migration, a destructive API call, an incident triage. Most systems never measure whether those decisions hold up. NthLayer does, and shows how much of your system still runs on judgment.</p>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<!-- Act 2: the proof -->
+<div class="act band">
+
+<section id="sre" aria-labelledby="sre-h">
+  <div class="wrap">
+    <h2 id="sre-h">Starting with your AI SRE</h2>
+    <div class="sre-grid">
+      <div class="prose">
+        <p class="lede">In operations, the evidence shows up on its own. The alert was real or it wasn’t. The service recovered or it didn’t. And the on-call who sees it is already the reviewer.</p>
+        <p>So every decision an AI SRE makes (to triage, suppress or remediate) is recorded, and settled when someone on the team overrides it where they already work. When its decisions stop holding up, its judgment SLO breaches, and the manifest can declare what happens next: reduce its autonomy.</p>
+        <a class="demo-link" href="/demo">Open the topology demo →</a>
+      </div>
+      <div>
+        <ol class="timeline">
+          <li style="--dot: var(--frost-2)">
+            <time>02:14</time>
+            <div class="body">
+              <p>The triage agent (the first row in the log above) marks a <strong>checkout-api 5xx</strong> alert as noise and suppresses it. Confidence 0.92.</p>
+              <span class="effect">verdict recorded, outcome pending</span>
+            </div>
+          </li>
+          <li style="--dot: var(--overridden)">
+            <time>02:31</time>
+            <div class="body">
+              <p>The error-budget burn rate on checkout-api passes 10×. An incident is opened.</p>
+              <span class="effect">evidence arrives</span>
+            </div>
+          </li>
+          <li style="--dot: var(--reversed)">
+            <time>02:33</time>
+            <div class="body">
+              <p>The on-call rejects the suppression in Slack. The override adapter binds it to the 02:14 verdict, which is settled as <strong>overridden</strong>. A confident decision that was overridden counts as a high-confidence failure.</p>
+              <span class="effect">high_confidence_failure above target</span>
+            </div>
+          </li>
+          <li style="--dot: var(--purple)">
+            <time>02:34</time>
+            <div class="body">
+              <p>The agent breaches its judgment SLO (a target for how often its decisions hold up) and the alert fires. The manifest’s declared breach action is to reduce its autonomy: it can still propose suppressions, but a human approves each one.</p>
+              <span class="effect">reduce_autonomy</span>
+            </div>
+          </li>
+        </ol>
+        <p class="scenario-note">Illustrative scenario.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="measures" aria-labelledby="measures-h">
+  <div class="wrap">
+    <h2 id="measures-h">What it measures</h2>
+    <p class="lede">Classical observability tells you a service was up, fast and cheap. These tell you whether its decisions were right.</p>
+    <ul class="gauges">
+      <li class="gauge">
+        <h3>Reversal rate</h3>
+        <p>How often is a decision overturned? Today: the share of decisions overridden by a human. The spec also counts reconsideration by the service and downstream feedback.</p>
+        <div class="meter" role="img" aria-label="Example: 3.1% against a target of at most 5%, within target">
+          <div class="meter-track"><div class="meter-fill" style="width: 31%"></div><div class="meter-target"></div></div>
+          <div class="meter-read"><span>7d <b>3.1%</b></span><span>target ≤ 5%</span></div>
+        </div>
+      </li>
+      <li class="gauge">
+        <h3>High-confidence failure rate</h3>
+        <p>How often is a high-confidence decision wrong? Those are the decisions that skip the review that would have caught them.</p>
+        <div class="meter" role="img" aria-label="Example: 2.6% against a target of at most 2%, over target">
+          <div class="meter-track"><div class="meter-fill over" style="width: 65%"></div><div class="meter-target"></div></div>
+          <div class="meter-read"><span>30d <b class="over">2.6%</b></span><span>target ≤ 2%</span></div>
+        </div>
+      </li>
+      <li class="gauge">
+        <h3>Calibration</h3>
+        <p>When the service says it is 80% confident, is it right 80% of the time?</p>
+        <div class="meter" role="img" aria-label="Example: calibration error 0.021 against a bound of at most 0.03, within bound">
+          <div class="meter-track"><div class="meter-fill" style="width: 35%"></div><div class="meter-target"></div></div>
+          <div class="meter-read"><span>error <b>0.021</b></span><span>bound ≤ 0.03</span></div>
+        </div>
+      </li>
+    </ul>
+    <dl class="signals-more">
+      <div>
+        <dt>Override rate</dt>
+        <dd>How often does a human step in, and is that rising or falling?</dd>
+      </div>
+      <div>
+        <dt>Feedback latency</dt>
+        <dd>How long until you can know whether a decision was right? That sets how quickly the other signals can catch a regression.</dd>
+      </div>
+      <div>
+        <dt>Segments, stability, audit backlog</dt>
+        <dd>Does quality hold across customer tiers (segments) and model updates (stability), and is anyone still sampling decisions for review (audit backlog)?</dd>
+      </div>
+    </dl>
+    <p class="example-note">Values shown are example data, matching the scenario above.</p>
+  </div>
+</section>
+
+</div>
+
+<!-- Act 3: the mechanism -->
+<div class="act">
+
+<section id="how" aria-labelledby="how-h">
+  <div class="wrap">
+    <h2 id="how-h">How it works</h2>
+    <p class="lede">Declare what “right” means, compile it into the monitoring you already run, then record decisions against it.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="prose">
+          <h3>Declare</h3>
+          <p>In the manifest, any service that makes decisions has the type <code>ai-gate</code>, even when the decider is a rule engine or a human approver.</p>
+          <p>The manifest follows the open <a href="https://github.com/rsionnach/opensrm">OpenSRM spec</a>. It carries classical SLOs for whether the service is up, and judgment SLOs for whether its decisions are right.</p>
+        </div>
+        <div>
+          <span class="file">service.yaml (excerpt)</span>
+<pre class="code" tabindex="0" role="region" aria-label="Example manifest excerpt"><code><span class="k">spec:</span>
+  <span class="k">service:</span> { <span class="k">name:</span> <span class="s">triage-agent</span>, <span class="k">type:</span> <span class="s">ai-gate</span> }
+  <span class="k">judgment_slo:</span>
+    - <span class="k">service:</span> <span class="s">triage-agent</span>
+      <span class="k">judgment_type:</span> <span class="s">reversal_rate</span>
+      <span class="k">measurement:</span> { <span class="k">window:</span> <span class="s">7d</span>, <span class="k">source:</span> <span class="s">lineage</span> }
+      <span class="k">target:</span> { <span class="k">maximum_reversal_rate:</span> <span class="n">0.05</span> }
+    - <span class="k">service:</span> <span class="s">triage-agent</span>
+      <span class="k">judgment_type:</span> <span class="s">high_confidence_failure</span>
+      <span class="k">measurement:</span> { <span class="k">confidence_threshold:</span> <span class="n">0.9</span>, <span class="k">window:</span> <span class="s">30d</span> }
+      <span class="k">target:</span> { <span class="k">maximum_failure_rate:</span> <span class="n">0.02</span> }</code></pre>
+          <a class="more-link" href="https://github.com/rsionnach/nthlayer#how-it-works">See a full manifest →</a>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="prose">
+          <h3>Compile</h3>
+          <p><code>nthlayer apply</code> turns the manifest into Prometheus recording rules, dashboards, docs, Backstage entities and two kinds of alert: breach, and not-evaluable. A not-evaluable alert fires when a bound can’t be measured at all, so it is reported rather than treated as healthy. It is deterministic and needs no runtime.</p>
+          <p>The same step runs in CI through the GitHub Action, so a judgment SLO without a data source fails the build before it fails in production.</p>
+        </div>
+        <div>
+<pre class="code" tabindex="0" role="region" aria-label="Compile commands"><code><span class="p">$ </span>nthlayer init
+<span class="p">$ </span>nthlayer apply service.yaml</code></pre>
+          <span class="file">.github/workflows/reliability.yaml</span>
+<pre class="code" tabindex="0" role="region" aria-label="GitHub Action example"><code>- <span class="k">uses:</span> <span class="s">rsionnach/nthlayer@v1</span>
+  <span class="k">with:</span>
+    <span class="k">manifest:</span> <span class="s">service.yaml</span></code></pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="prose">
+          <h3>Run</h3>
+          <p>The runtime is three tiers that talk only over HTTP, plus an adapter for human overrides. Every decision becomes a content-addressed record of what was decided, on what assumptions and with what confidence. The decision is written once; its outcome is settled once, later.</p>
+          <p>Decisions arrive as an HTTP POST to core, as a plain verdict or a CloudEvents envelope. Overrides go to the adapter, which binds each one to its verdict by decision ID.</p>
+        </div>
+        <div>
+          <ul class="tiers">
+            <li><div class="node"><span class="tier-label">Tier 1</span><code>nthlayer-core</code><span>Verdict store, case management and the API.</span></div></li>
+            <li><div class="node"><span class="tier-label">Tier 2</span><code>nthlayer-workers</code><span>Evaluates SLOs and judgment SLOs, groups related events into situations before anyone has called it an incident, coordinates response, resolves outcomes.</span></div></li>
+            <li><div class="node"><span class="tier-label">Tier 3</span><code>nthlayer-bench</code><span>Terminal UI for the moments that need a human. Reads as prose, not graphs.</span></div></li>
+            <li class="side"><div class="node"><span class="tier-label">Adapter</span><code>nthlayer-override-adapter</code><span>Ingests human overrides from wherever reviewers already work (Jira, Slack, a review UI, a webhook) and binds each one to the verdict it overturns.</span></div></li>
+          </ul>
+          <span class="file">POST /verdicts (example)</span>
+<pre class="code" tabindex="0" role="region" aria-label="Example verdict request"><code>{
+  <span class="k">"producer":</span> <span class="s">"triage-agent"</span>,
+  <span class="k">"subject":</span> <span class="s">"checkout-api 5xx alert"</span>,
+  <span class="k">"judgment":</span> {
+    <span class="k">"action":</span> <span class="s">"suppress"</span>,
+    <span class="k">"confidence":</span> <span class="n">0.92</span>,
+    <span class="k">"reasoning":</span> <span class="s">"matches a known flapping pattern"</span>
   },
-  {
-    id: "generate",
-    label: "GENERATE",
-    name: "Generate",
-    color: "#5e81ac",
-    desc: "Manifests forged into monitoring infrastructure",
-    detail: "Reads your manifest and produces everything: Prometheus recording rules, Grafana dashboards, alerting rules, and deploy gates. Including judgment SLO error budget rules that block deploys when AI quality degrades.",
-    code: `$ nthlayer generate --manifest service.reliability.yaml
+  <span class="k">"lineage":</span> <span class="c">{ … }</span>
+}</code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
-✓ Prometheus recording rules     12 rules generated
-✓ Judgment SLO recording rules    3 rules generated  
-✓ Grafana dashboards              4 dashboards
-✓ Alert rules                     8 alerts
-✓ Deploy gate rules               2 gates configured
+<section id="sits" aria-labelledby="sits-h">
+  <div class="wrap">
+    <h2 id="sits-h">Where NthLayer sits</h2>
+    <p class="lede">Beside the loop, not inside it. NthLayer measures your AI SRE the same way no matter who built it, from records you own.</p>
 
-$ nthlayer check-deploy --service loan-approval-agent
+    <figure class="diagram sits-a" aria-labelledby="sits-q">
+      <p class="q" id="sits-q">Can a machine say no before it ships?</p>
+      <div class="col">
+        <p class="ans yes">Yes</p>
+        <ul class="checks"><li>Compilers</li><li>Type checkers</li><li>Test suites</li><li>Simulators</li><li>Offline evals</li></ul>
+        <p class="verdict-line"><strong>Use them.</strong> They catch it before production.</p>
+      </div>
+      <div class="col">
+        <p class="ans no">No: everything else</p>
+        <p class="sr-only">Your AI SRE, rule engines and human approvers post decisions to NthLayer over HTTP. Human overrides from Slack, Jira or a webhook feed outcomes back into NthLayer. NthLayer sends recording rules and alerts to Prometheus, Alertmanager and Grafana, the stack you already run.</p>
+        <div aria-hidden="true">
+          <div class="node">Your AI SRE · rule engines · human approvers<span>triage, suppress, approve, release</span></div>
+          <div class="arrow down"><svg width="9" height="40" viewBox="0 0 9 40"><path d="M4.5 0 V34" stroke="currentColor" stroke-width="1"/><path d="M0 34 L4.5 40 L9 34" fill="currentColor"/></svg> decisions, over HTTP</div>
+          <div class="flow-mid">
+            <div class="node nth"><b>NthLayer</b><span>verdict store · judgment SLOs</span></div>
+            <div class="arrow left tone-out"><svg width="28" height="9" viewBox="0 0 28 9"><path d="M28 4.5 H6" stroke="currentColor" stroke-width="1"/><path d="M6 0 L0 4.5 L6 9" fill="currentColor"/></svg><span>outcomes</span></div>
+            <div class="node out">Human overrides<span>Slack · Jira · webhook</span></div>
+          </div>
+          <div class="arrow down"><svg width="9" height="40" viewBox="0 0 9 40"><path d="M4.5 0 V34" stroke="currentColor" stroke-width="1"/><path d="M0 34 L4.5 40 L9 34" fill="currentColor"/></svg> recording rules, alerts</div>
+          <div class="node dst">Prometheus · Alertmanager · Grafana<span>the stack you already run</span></div>
+        </div>
+      </div>
+    </figure>
 
-  SLO                        Budget    Status
-  ─────────────────────────────────────────────
-  availability (99.9%)       62.4%     ✓ pass
-  judgment_reversal (5%)     18.1%     ✓ pass
-  
-  Deploy: CLEARED`,
-  },
-  {
-    id: "measure",
-    label: "MEASURE",
-    name: "Measure",
-    color: "#b48ead",
-    desc: "Quality evaluation and autonomy governance",
-    detail: "Point it at any AI agent. It evaluates output quality via adapters (push or pull), tracks confidence scores, detects drift, and emits OTel metrics that flow to Prometheus. When quality drops below your judgment SLO threshold, it automatically reduces agent autonomy — forcing human review until trust is re-established. Autonomy can only be restored by a human. The ratchet only tightens.",
-    code: `// Measurement layer → OTel metrics via adapter
+    <div class="sits-notes">
+      <div>
+        <h3>What NthLayer needs from your AI SRE</h3>
+        <ol class="needs">
+          <li><strong>A stable decision ID</strong> for each triage or recommendation, and the action taken.</li>
+          <li><strong>A confidence between 0 and 1.</strong> Without it, high-confidence failure and calibration can’t be measured.</li>
+          <li><strong>A way to post the verdict</strong>, or an output NthLayer can poll.</li>
+          <li><strong>The decision ID wherever a human can reject it</strong> (Slack, Jira, the vendor’s UI), so the override finds its verdict.</li>
+          <li><strong>Lineage, if it has it:</strong> which alert triggered the decision, and what followed.</li>
+        </ol>
+      </div>
+      <ul class="sits-asides">
+        <li><strong>Not an AI SRE or agent framework.</strong>It doesn’t run your agents. It records what they decided and scores it against what happened.</li>
+        <li><strong>Beyond operations.</strong>The same record works for any decision no test can check: refunds, cleanups, schema changes, releases.</li>
+      </ul>
+    </div>
+  </div>
+</section>
 
-gen_ai_decision_total{
-  system="loan-approval-agent",
-  action="approve",
-  environment="production"
-}  // counter: 14,291
+</div>
 
-gen_ai_decision_score{
-  system="loan-approval-agent",
-  agent="underwriting-v3"
-}  // gauge: 0.87
+<!-- Act 4: adoption -->
+<div class="act band">
 
-gen_ai_override_reversal_total{
-  system="loan-approval-agent",
-  environment="production"
-}  // counter: 412  →  reversal_rate: 2.88%`,
-  },
-  {
-    id: "correlate",
-    label: "CORRELATE",
-    name: "Correlate",
-    color: "#ebcb8b",
-    desc: "Signal correlation at enterprise scale",
-    detail: "Ingests signals from everywhere — quality metrics from Prometheus, deploy events, dependency health — and correlates them in real time. When a deploy causes judgment quality to drop, it connects the dots before you do.",
-    code: `▌ CORRELATION — loan-approval-agent
-▌ 2026-03-17T02:14:00Z
-▌ 
-▌ CORRELATION DETECTED (confidence: 0.84)
-▌ 
-▌ Timeline:
-▌  02:01  Deploy v2.4.1 (underwriting model update)
-▌  02:03  judgment_reversal_rate climbing: 2.8% → 4.1%
-▌  02:08  credit-scoring-service p99 latency +340ms
-▌  02:11  Quality score drop: 0.87 → 0.71
-▌  02:14  Judgment SLO error budget burn rate: 9.2x
-▌ 
-▌ Assessment: Deploy v2.4.1 degraded underwriting
-▌ quality. Correlated with upstream latency spike.`,
-  },
-  {
-    id: "respond",
-    label: "RESPOND",
-    name: "Respond",
-    color: "#bf616a",
-    desc: "AI-coordinated incident response",
-    detail: "When a critical signal is detected, it coordinates the response: triage agents assess severity, investigation agents identify root cause, remediation agents propose and execute fixes. Humans stay in the loop for decisions that matter.",
-    code: `▌ INCIDENT — INC-2026-0847
-▌ Severity: 2 (auto-triaged, confirmed by on-call)
-▌ 
-▌ Triage:     Judgment SLO breach imminent
-▌ Root cause: Model regression in underwriting-v3
-▌ Impact:     ~340 loan decisions at degraded quality
-▌ 
-▌ Recommended actions:
-▌  [1] Rollback to underwriting-v2 (automated, ready)
-▌  [2] Reduce agent autonomy to human-review mode
-▌  [3] Pause non-critical loan processing
-▌
-▌ On-call approved action [1] at 02:19
-▌ Rollback executing...
-▌ ✓ underwriting-v2 serving at 02:21
-▌ ✓ reversal_rate stabilising: 4.1% → 3.2%`,
-  },
-  {
-    id: "learn",
-    label: "LEARN",
-    name: "Learn",
-    color: "#a3be8c",
-    desc: "The atomic unit of AI judgment",
-    detail: "Every AI decision becomes a verdict. Every human override closes the loop. This is how the ecosystem knows whether agents were right — not at decision time, but after consequences play out. The system gets smarter after every incident.",
-    code: `{
-  "id": "vrd_8f2e1a",
-  "judgment": {
-    "action": "approve",
-    "score": 0.71,
-    "confidence": 0.62,
-    "rationale": "Meets credit threshold despite 
-                  elevated risk signals"
-  },
-  "outcome": {
-    "status": "overridden",
-    "override": {
-      "by": "human",
-      "reason": "Model regression — underwriting-v3
-                 miscalibrated after deploy v2.4.1",
-      "corrected_action": "escalate_to_review"
-    }
-  },
-  "lineage": {
-    "context": ["vrd_7a1b2c"],
-    "children": ["vrd_9d3f4e"]
+<section id="status" aria-labelledby="status-h">
+  <div class="wrap">
+    <h2 id="status-h">Status</h2>
+    <p class="lede">All open source. Each repo keeps its own changelog, and an integration test across the three runtime tiers runs nightly.</p>
+    <ul class="status">
+      <li><a href="https://github.com/rsionnach/opensrm">opensrm</a><span class="tag impl">v2 draft</span><span class="note">NthLayer implements the v2 draft. Migrate v1 manifests with <code>nthlayer migrate-manifest</code>.</span></li>
+      <li><a href="https://github.com/rsionnach/nthlayer-generate">nthlayer-generate</a><span class="tag stable">Stable</span><span class="note">CI-ready, in production use</span></li>
+      <li><a href="https://github.com/rsionnach/nthlayer-common">nthlayer-common</a><span class="tag stable">Stable</span><span class="note">Vocabulary stable on the 5.x line</span></li>
+      <li><a href="https://github.com/rsionnach/nthlayer-core">nthlayer-core</a><span class="tag impl">Implemented</span><span class="note">Running in evaluation deployments</span></li>
+      <li><a href="https://github.com/rsionnach/nthlayer-workers">nthlayer-workers</a><span class="tag impl">Implemented</span><span class="note">Under integration testing</span></li>
+      <li><a href="https://github.com/rsionnach/nthlayer-override-adapter">nthlayer-override-adapter</a><span class="tag early">Early</span><span class="note">HTTP, batch and webhook ingestion work</span></li>
+      <li><a href="https://github.com/rsionnach/nthlayer-bench">nthlayer-bench</a><span class="tag impl">Usable</span><span class="note">Against a running core</span></li>
+    </ul>
+  </div>
+</section>
+
+<section id="start" aria-labelledby="start-h">
+  <div class="wrap">
+    <h2 id="start-h">Get started</h2>
+    <p class="lede">Start with the compiler. It needs nothing deployed.</p>
+    <div class="start-main">
+      <div>
+        <div class="install">
+          <span class="prompt" aria-hidden="true">$</span>
+          <code id="install-cmd-2">pip install nthlayer-generate</code>
+          <button class="copy" type="button" data-copy="install-cmd-2" aria-label="Copy install command">Copy</button>
+        </div>
+        <pre class="code" tabindex="0" role="region" aria-label="First commands"><code><span class="p">$ </span>nthlayer init
+<span class="p">$ </span>nthlayer apply service.yaml</code></pre>
+        <details>
+          <summary>Run the full runtime instead</summary>
+<pre class="code" tabindex="0" role="region" aria-label="Full runtime commands"><code><span class="p">$ </span>pip install nthlayer   <span class="c"># generate + core + workers + bench</span>
+<span class="p">$ </span>nthlayer-core serve
+<span class="p">$ </span>nthlayer-bench --core-url http://localhost:8000</code></pre>
+        </details>
+      </div>
+      <ul class="paths">
+        <li><strong>Evaluating the idea</strong>Read the <a href="https://github.com/rsionnach/opensrm">OpenSRM spec</a>, starting with the judgment SLO section.</li>
+        <li><strong>Seeing it work</strong>Open the <a href="/demo">topology demo</a>.</li>
+        <li><strong>Standing up the runtime</strong>Follow the <a href="https://github.com/rsionnach/nthlayer-core/blob/main/docs/deploying.md">deployment tutorial</a> from install to a verdict round-tripping through a running server.</li>
+        <li><strong>Why this matters</strong><a href="/research">Read the research on what today’s AI observability tools measure</a>, and what they miss.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+</div>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>NthLayer is open source. The front-door repo and the compiler are MIT; the spec, shared library and runtime are Apache 2.0.</span>
+    <ul>
+      <li><a href="https://github.com/rsionnach/nthlayer">GitHub</a></li>
+      <li><a href="https://github.com/rsionnach/opensrm">OpenSRM spec</a></li>
+      <li><a href="/research">Research</a></li>
+      <li><a href="https://dev.to/rsionnach">Articles</a></li>
+      <li><a href="https://robfox.dev">robfox.dev</a></li>
+    </ul>
+  </div>
+</footer>
+
+<script>
+// Copy-to-clipboard. Announces the result; on failure, selects the text and says how to copy it.
+(function () {
+  var status = document.getElementById('copy-status');
+  function announce(msg) { status.textContent = ''; setTimeout(function () { status.textContent = msg; }, 50); }
+  function selectText(el) {
+    var range = document.createRange();
+    range.selectNodeContents(el);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
   }
-}`,
-  },
-];
+  document.querySelectorAll('[data-copy]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var target = document.getElementById(btn.dataset.copy);
+      var reset = function () { btn.textContent = 'Copy'; btn.removeAttribute('data-done'); };
+      var fail = function () {
+        selectText(target);
+        btn.textContent = 'Selected';
+        announce('Copy failed. The command is selected; press Command or Control plus C to copy it.');
+        setTimeout(reset, 2400);
+      };
+      if (!navigator.clipboard) return fail();
+      navigator.clipboard.writeText(target.textContent).then(function () {
+        btn.textContent = 'Copied';
+        btn.setAttribute('data-done', '');
+        announce('Install command copied to clipboard.');
+        setTimeout(reset, 1800);
+      }, fail);
+    });
+  });
+})();
 
-const LIFECYCLE_STEPS = COMPONENTS.map((c) => ({
-  label: c.label,
-  name: c.label,
-  color: c.color,
-}));
+// Mobile menu: close on link click, Escape, or a tap outside.
+(function () {
+  var menu = document.querySelector('.nav-menu');
+  if (!menu) return;
+  var summary = menu.querySelector('summary');
+  menu.addEventListener('click', function (e) { if (e.target.closest('a')) menu.open = false; });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && menu.open) { menu.open = false; summary.focus(); }
+  });
+  document.addEventListener('click', function (e) { if (menu.open && !menu.contains(e.target)) menu.open = false; });
+})();
 
-const GAP_EVIDENCE = [
-  {
-    source: "Brendan Burns",
-    role: "Kubernetes co-founder, Corporate VP Azure",
-    context: "SREcon25 Americas, 2025",
-    insight: "There is rarely a clean 'working' or 'broken' signal from AI releases. We monitor latency and errors, but that no longer says your system is working right.",
-    gap: "Traditional metrics confirmed insufficient by the architect of modern infrastructure.",
-    color: "#81a1c1",
-  },
-  {
-    source: "LangChain State of AI Agents",
-    role: "1,300+ respondents, December 2025",
-    context: "Industry survey",
-    insight: "89% of organisations have implemented observability for their AI agents. Yet 32% still cite quality as the number one production barrier.",
-    gap: "The industry has observability. It just measures the wrong things.",
-    color: "#5e81ac",
-  },
-  {
-    source: "Alex Palcuie",
-    role: "AI Reliability Engineering, Anthropic",
-    context: "QCon London, March 2026",
-    insight: "Every time I asked Claude what happened, it would say 'request volume increase, this is a capacity problem.' The real issue was a broken cache. Claude will get wrong correlation versus causation.",
-    gap: "Even frontier AI labs cannot trust their own models' judgment during incidents.",
-    color: "#b48ead",
-  },
-  {
-    source: "Charity Majors",
-    role: "Co-founder & CTO, Honeycomb",
-    context: "Co-author, Observability Engineering (O'Reilly)",
-    insight: "You can't understand a model in a vacuum. With the surge of generative AI, complexity was increasing fast. It's now been cranked up even faster. The wheels are coming off.",
-    gap: "The person who wrote the book on observability says the current model is breaking.",
-    color: "#ebcb8b",
-  },
-  {
-    source: "Gartner",
-    role: "Daryl Plummer, Distinguished VP Analyst",
-    context: "Gartner IT Symposium",
-    insight: "The implementation of guardrails, security filters, human oversight, or even security observability are not sufficient to ensure consistently appropriate agent use.",
-    gap: "The enterprise's most trusted analyst declares the entire current stack insufficient.",
-    color: "#bf616a",
-  },
-  {
-    source: "Dynatrace Pulse of Agentic AI",
-    role: "919 senior technology leaders, January 2026",
-    context: "Global survey",
-    insight: "42% report limited real-time visibility to trace agent behaviour. 69% of agentic AI decisions are currently human-verified. Only 13% use fully autonomous agents.",
-    gap: "The majority of AI decisions require human verification. Nobody is measuring the override rate as an SLO.",
-    color: "#a3be8c",
-  },
-];
+// The one authored moment: the top verdict starts pending and settles as overridden.
+// The settled state is the HTML default, so no-JS and reduced-motion visitors see it directly.
+(function () {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var row = document.getElementById('live-row');
+  var verdict = document.getElementById('live-verdict');
+  var rate = document.getElementById('rate');
+  var rateVal = document.getElementById('rate-val');
+  if (!row || !verdict || !('IntersectionObserver' in window)) return;
 
-function useScrollProgress(ref) {
-  const [progress, setProgress] = useState(0);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          const rect = entry.boundingClientRect;
-          const vh = window.innerHeight;
-          const p = Math.min(1, Math.max(0, (vh - rect.top) / (vh + rect.height)));
-          setProgress(p);
-        }
-      },
-      { threshold: Array.from({ length: 20 }, (_, i) => i / 19) }
-    );
-    observer.observe(el);
-    const onScroll = () => {
-      const rect = el.getBoundingClientRect();
-      const vh = window.innerHeight;
-      const p = Math.min(1, Math.max(0, (vh - rect.top) / (vh + rect.height)));
-      setProgress(p);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("scroll", onScroll);
-    };
-  }, [ref]);
-  return progress;
-}
+  var settled = verdict.innerHTML;
+  verdict.className = 'verdict v-pending';
+  verdict.innerHTML = 'pending<small>awaiting outcome</small>';
+  row.classList.remove('settled');
+  rate.classList.remove('up');
+  rateVal.textContent = '2.9%';
 
-function useInView(ref, threshold = 0.15) {
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) setInView(true);
-    }, { threshold });
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [ref, threshold]);
-  return inView;
-}
-
-function LifecycleBar({ activeIndex }) {
-  return (
-    <div style={{
-      display: "flex", alignItems: "center", gap: 0,
-      padding: "0 20px", width: "100%", maxWidth: 900, margin: "0 auto",
-    }}>
-      {LIFECYCLE_STEPS.map((step, i) => {
-        const active = i <= activeIndex;
-        return (
-          <div key={step.label} style={{ display: "flex", alignItems: "center", flex: 1 }}>
-            <div style={{
-              display: "flex", flexDirection: "column", alignItems: "center", gap: 6, minWidth: 70,
-            }}>
-              <div style={{
-                width: 12, height: 12, borderRadius: "50%",
-                background: active ? step.color : "#1E2A3A",
-                border: `2px solid ${active ? step.color : "#2A3A4E"}`,
-                transition: "all 0.5s ease",
-                boxShadow: active ? `0 0 12px ${step.color}40` : "none",
-              }} />
-              <span style={{
-                fontFamily: "'JetBrains Mono', monospace", fontSize: 9, letterSpacing: "0.1em",
-                color: active ? step.color : "#4A5568",
-                transition: "color 0.5s ease", textTransform: "uppercase", fontWeight: 600,
-              }}>{step.name}</span>
-            </div>
-            {i < LIFECYCLE_STEPS.length - 1 && (
-              <div style={{
-                flex: 1, height: 2, marginLeft: 8, marginRight: 8, marginTop: -18,
-                background: i < activeIndex
-                  ? `linear-gradient(90deg, ${step.color}, ${LIFECYCLE_STEPS[i + 1].color})`
-                  : "#1E2A3A",
-                transition: "background 0.5s ease",
-              }} />
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function ComponentSection({ component, index, onInView }) {
-  const ref = useRef(null);
-  const inView = useInView(ref, 0.2);
-
-  // Separate bidirectional observer for lifecycle bar tracking
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) onInView(index);
-    }, { threshold: 0.3 });
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [index, onInView]);
-
-  const isCode = component.code.trim().startsWith("{") || component.code.trim().startsWith("//");
-
-  return (
-    <div ref={ref} style={{
-      display: "flex", alignItems: "center",
-      padding: "64px 24px", position: "relative",
-    }}>
-      <div style={{
-        maxWidth: 1100, margin: "0 auto", width: "100%",
-        display: "grid", gridTemplateColumns: "1fr 1fr", gap: 60,
-        opacity: inView ? 1 : 0,
-        transform: inView ? "translateY(0)" : "translateY(40px)",
-        transition: "all 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
-      }}>
-        <div style={{
-          display: "flex", flexDirection: "column", justifyContent: "center",
-          order: index % 2 === 0 ? 0 : 1,
-        }}>
-          {component.codename && <div style={{
-            fontFamily: "'JetBrains Mono', monospace", fontSize: 11,
-            letterSpacing: "0.15em", color: component.color,
-            textTransform: "uppercase", fontWeight: 600, marginBottom: 12,
-          }}>
-            {component.label}
-          </div>}
-          <h2 style={{
-            fontFamily: "'Instrument Serif', Georgia, serif", fontSize: 48,
-            color: "#F0F0F3", fontWeight: 400, lineHeight: 1.1, margin: "0 0 16px 0",
-          }}>
-            {component.codename || component.name}
-          </h2>
-          <p style={{
-            fontFamily: "'Inter', sans-serif", fontSize: 18, color: component.color,
-            margin: "0 0 20px 0", fontWeight: 500,
-          }}>
-            {component.desc}
-          </p>
-          <p style={{
-            fontFamily: "'Inter', sans-serif", fontSize: 15, color: "#9CA3AF",
-            lineHeight: 1.7, margin: 0,
-          }}>
-            {component.detail}
-          </p>
-        </div>
-
-        <div style={{
-          order: index % 2 === 0 ? 1 : 0,
-          background: "#080E1A",
-          borderRadius: 12,
-          border: "1px solid #1E2A3A",
-          overflow: "hidden",
-          boxShadow: `0 0 40px ${component.color}08, 0 20px 60px rgba(0,0,0,0.4)`,
-        }}>
-          <div style={{
-            padding: "10px 16px", borderBottom: "1px solid #1E2A3A",
-            display: "flex", alignItems: "center", gap: 8,
-          }}>
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#bf616a" }} />
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#ebcb8b" }} />
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#a3be8c" }} />
-            <span style={{
-              fontFamily: "'JetBrains Mono', monospace", fontSize: 11,
-              color: "#4A5568", marginLeft: 8,
-            }}>
-              {(component.codename || component.name).toLowerCase()}{isCode ? ".json" : ""}
-            </span>
-          </div>
-          <pre style={{
-            padding: "20px", margin: 0, overflowX: "auto",
-            fontFamily: "'JetBrains Mono', monospace", fontSize: 12.5,
-            lineHeight: 1.65, color: "#C9CDD5",
-          }}>
-            <code>{component.code}</code>
-          </pre>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function HeroParticles() {
-  const canvasRef = useRef(null);
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    let frame;
-    const particles = Array.from({ length: 20 }, () => ({
-      x: Math.random() * 1200,
-      y: Math.random() * 700,
-      vx: (Math.random() - 0.5) * 0.15,
-      vy: (Math.random() - 0.5) * 0.15,
-      r: Math.random() * 1 + 0.5,
-      opacity: Math.random() * 0.15 + 0.05,
-    }));
-    const draw = () => {
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      particles.forEach((p) => {
-        p.x += p.vx;
-        p.y += p.vy;
-        if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
-        if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(148,163,184,${p.opacity})`;
-        ctx.fill();
-      });
-      frame = requestAnimationFrame(draw);
-    };
-    draw();
-    return () => cancelAnimationFrame(frame);
-  }, []);
-  return (
-    <canvas ref={canvasRef} style={{
-      position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none",
-    }} />
-  );
-}
-
-function LoopDiagram() {
-  const ref = useRef(null);
-  const inView = useInView(ref, 0.2);
-  return (
-    <div ref={ref} style={{
-      padding: "80px 24px", textAlign: "center",
-      opacity: inView ? 1 : 0, transform: inView ? "translateY(0)" : "translateY(30px)",
-      transition: "all 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
-    }}>
-      <div style={{
-        fontFamily: "'JetBrains Mono', monospace", fontSize: 11,
-        letterSpacing: "0.15em", color: "#a3be8c", textTransform: "uppercase",
-        fontWeight: 600, marginBottom: 16,
-      }}>THE CLOSED LOOP</div>
-      <h2 style={{
-        fontFamily: "'Instrument Serif', Georgia, serif", fontSize: 42,
-        color: "#F0F0F3", fontWeight: 400, margin: "0 0 16px 0",
-      }}>
-        Every incident makes the system smarter
-      </h2>
-      <p style={{
-        fontFamily: "'Inter', sans-serif", fontSize: 16, color: "#9CA3AF",
-        maxWidth: 600, margin: "0 auto 48px auto", lineHeight: 1.7,
-      }}>
-        Verdicts close the loop. Human overrides become calibration data. 
-        The Measure layer learns which judgments to trust — and when quality drops,
-        it automatically reduces agent autonomy. Crucially, autonomy can only be
-        restored by a human. The system tightens on its own. It never loosens without permission.
-      </p>
-
-      <div style={{
-        maxWidth: 900, margin: "0 auto",
-        display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 12,
-      }}>
-        {[
-          { label: "Agent decides", icon: "→", color: "#F0F0F3" },
-          { label: "Quality measured", icon: "→", color: "#b48ead" },
-          { label: "Verdict recorded", icon: "→", color: "#a3be8c" },
-          { label: "Human overrides", icon: "→", color: "#ebcb8b" },
-          { label: "Verdict updated", icon: "→", color: "#a3be8c" },
-          { label: "SLO recalculated", icon: "→", color: "#5e81ac" },
-          { label: "Autonomy reduced", icon: "→", color: "#bf616a" },
-          { label: "Next deploy gated", icon: "⟳", color: "#bf616a" },
-        ].map((step, i) => (
-          <div key={i} style={{
-            display: "flex", alignItems: "center", gap: 8,
-          }}>
-            <span style={{
-              fontFamily: "'JetBrains Mono', monospace", fontSize: 12,
-              padding: "6px 14px", borderRadius: 6,
-              background: step.color + "15", border: `1px solid ${step.color}30`,
-              color: step.color,
-            }}>{step.label}</span>
-            {i < 7 && <span style={{ color: "#2A3A4E", fontSize: 18 }}>{step.icon}</span>}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-const SCENARIO_STEPS = [
-  {
-    active: ["opensrm"],
-    pulse: null,
-    title: "Contract defined",
-    event: "Reliability manifest loaded for loan-approval-agent",
-    detail: "judgment_reversal_rate < 5% over 30d window · availability 99.9%",
-    color: "#81a1c1",
-  },
-  {
-    active: ["opensrm", "foundry"],
-    pulse: { from: 0, to: 1 },
-    title: "Deploy gate check",
-    event: "Reads manifest → queries Prometheus recording rules",
-    detail: "availability budget: 62.4% remaining · judgment budget: 18.1% remaining → DEPLOY CLEARED",
-    color: "#5e81ac",
-  },
-  {
-    active: ["opensrm", "foundry", "agent"],
-    pulse: { from: 1, to: 2 },
-    title: "Agent goes live",
-    event: "loan-approval-agent v2.4.1 deployed · underwriting model updated",
-    detail: "02:01 UTC — agent begins processing loan applications in production",
-    color: "#F0F0F3",
-    isAlert: false,
-  },
-  {
-    active: ["opensrm", "foundry", "agent", "arbiter"],
-    pulse: { from: 2, to: 3 },
-    title: "Quality breach — autonomy reduced",
-    event: "Evaluates agent output via adapter · score: 0.87 → 0.71",
-    detail: "Agent downgraded to human-review mode · OTel metrics emitted → Prometheus",
-    color: "#b48ead",
-    isAlert: true,
-  },
-  {
-    active: ["opensrm", "foundry", "agent", "arbiter", "sitrep"],
-    pulse: { from: 3, to: 4 },
-    title: "Signals correlated",
-    event: "Reads quality metrics from Prometheus · links to deploy event",
-    detail: "correlation confidence: 0.84 · judgment SLO burn rate 9.2x computed from recording rules",
-    color: "#ebcb8b",
-    isAlert: true,
-  },
-  {
-    active: ["opensrm", "foundry", "agent", "arbiter", "sitrep", "mayday"],
-    pulse: { from: 4, to: 5 },
-    title: "Incident response",
-    event: "Coordinates rollback to v2.3.0",
-    detail: "on-call approves rollback at 02:19 · agent v2.3.0 serving at 02:21 · reversal_rate stabilising",
-    color: "#bf616a",
-    isAlert: true,
-  },
-  {
-    active: ["opensrm", "foundry", "agent", "arbiter", "sitrep", "mayday", "verdict"],
-    pulse: { from: 5, to: 6 },
-    title: "Loop closed",
-    event: "340 verdicts updated: outcome overridden · model regression recorded",
-    detail: "error budget recalculated · next deploy gated tighter · autonomy restoration requires human approval",
-    color: "#a3be8c",
-    isAlert: false,
-  },
-];
-
-const SCENARIO_NODES = [
-  { id: "opensrm", name: "Spec", color: "#81a1c1", x: 0 },
-  { id: "foundry", name: "Generate", color: "#5e81ac", x: 1 },
-  { id: "agent", name: "Agent", color: "#F0F0F3", x: 2, isAgent: true },
-  { id: "arbiter", name: "Measure", color: "#b48ead", x: 3 },
-  { id: "sitrep", name: "Correlate", color: "#ebcb8b", x: 4 },
-  { id: "mayday", name: "Respond", color: "#bf616a", x: 5 },
-  { id: "verdict", name: "Learn", color: "#a3be8c", x: 6 },
-];
-
-function ScenarioAnimation() {
-  const containerRef = useRef(null);
-  const stickyRef = useRef(null);
-  const [step, setStep] = useState(-1);
-  const [autoPlayed, setAutoPlayed] = useState(false);
-  const autoTimerRef = useRef(null);
-  const enteredView = useRef(false);
-
-  // Scroll-driven progress
-  useEffect(() => {
-    const onScroll = () => {
-      const el = containerRef.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const vh = window.innerHeight;
-      const scrollableHeight = el.offsetHeight - vh;
-      if (scrollableHeight <= 0) return;
-      const scrolled = -rect.top;
-      const progress = Math.max(0, Math.min(1, scrolled / scrollableHeight));
-
-      // Only override auto-play if user has scrolled into the section
-      if (rect.top < vh && rect.bottom > 0) {
-        const newStep = Math.min(
-          SCENARIO_STEPS.length - 1,
-          Math.floor(progress * (SCENARIO_STEPS.length + 0.5))
-        );
-        if (autoPlayed || progress > 0.02) {
-          setStep(newStep);
-          // Stop auto-play if user scrolls
-          if (autoTimerRef.current && progress > 0.05) {
-            clearInterval(autoTimerRef.current);
-            autoTimerRef.current = null;
-          }
-        }
-      }
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [autoPlayed]);
-
-  // Auto-play on enter view
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !enteredView.current) {
-          enteredView.current = true;
-          let currentStep = -1;
-          autoTimerRef.current = setInterval(() => {
-            currentStep++;
-            if (currentStep >= SCENARIO_STEPS.length) {
-              clearInterval(autoTimerRef.current);
-              autoTimerRef.current = null;
-              setAutoPlayed(true);
-              return;
-            }
-            setStep(currentStep);
-          }, 1800);
-        }
-      },
-      { threshold: 0.3 }
-    );
-    observer.observe(el);
-    return () => {
-      observer.disconnect();
-      if (autoTimerRef.current) clearInterval(autoTimerRef.current);
-    };
-  }, []);
-
-  const currentStep = step >= 0 && step < SCENARIO_STEPS.length ? SCENARIO_STEPS[step] : null;
-
-  return (
-    <div
-      id="scenario"
-      ref={containerRef}
-      style={{
-        height: `${(SCENARIO_STEPS.length + 1) * 55}vh`,
-        position: "relative",
-      }}
-    >
-      <div
-        ref={stickyRef}
-        style={{
-          position: "sticky",
-          top: 80,
-          height: "calc(100vh - 100px)",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "40px 24px",
-        }}
-      >
-        {/* Section header */}
-        <div
-          style={{
-            textAlign: "center",
-            marginBottom: 48,
-          }}
-        >
-          <div
-            style={{
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: 11,
-              letterSpacing: "0.15em",
-              color: "#88c0d0",
-              textTransform: "uppercase",
-              fontWeight: 600,
-              marginBottom: 12,
-              opacity: step >= 0 ? 0.4 : 1,
-              transition: "opacity 0.6s ease",
-            }}
-          >
-            WATCH IT WORK
-          </div>
-          <h2
-            style={{
-              fontFamily: "'Instrument Serif', Georgia, serif",
-              fontSize: 36,
-              color: "#F0F0F3",
-              fontWeight: 400,
-              margin: 0,
-            }}
-          >
-            One incident. Six layers. Full lifecycle.
-          </h2>
-        </div>
-
-        {/* Node flow */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 0,
-            maxWidth: 900,
-            width: "100%",
-            justifyContent: "center",
-            marginBottom: 48,
-          }}
-        >
-          {SCENARIO_NODES.map((node, i) => {
-            const isActive =
-              currentStep && currentStep.active.includes(node.id);
-            const isPulsing =
-              currentStep &&
-              currentStep.pulse &&
-              (currentStep.pulse.from === i || currentStep.pulse.to === i);
-            const isTarget =
-              currentStep && currentStep.pulse && currentStep.pulse.to === i;
-
-            return (
-              <div
-                key={node.id}
-                style={{ display: "flex", alignItems: "center", flex: 1 }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: 10,
-                    minWidth: 80,
-                    position: "relative",
-                  }}
-                >
-                  {/* Glow ring */}
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: -8,
-                      width: 56,
-                      height: 56,
-                      borderRadius: node.isAgent ? "12px" : "50%",
-                      background: isTarget
-                        ? `radial-gradient(circle, ${node.color}25 0%, transparent 70%)`
-                        : "transparent",
-                      transition: "all 0.6s ease",
-                    }}
-                  />
-                  {/* Node — circle for layers, dashed square for agent */}
-                  <div
-                    style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: node.isAgent ? "10px" : "50%",
-                      background: isActive
-                        ? node.isAgent ? node.color + "08" : node.color + "20"
-                        : "#0B1120",
-                      border: node.isAgent
-                        ? `2px dashed ${isActive ? node.color + "70" : "#1E2A3A"}`
-                        : `2px solid ${isActive ? node.color : "#1E2A3A"}`,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      transition: "all 0.5s ease",
-                      boxShadow: isTarget
-                        ? `0 0 20px ${node.color}40, 0 0 40px ${node.color}15`
-                        : "none",
-                      position: "relative",
-                      zIndex: 2,
-                    }}
-                  >
-                    {node.isAgent ? (
-                      <div style={{
-                        fontFamily: "'JetBrains Mono', monospace",
-                        fontSize: 14,
-                        color: isActive ? node.color : "#1E2A3A",
-                        transition: "all 0.5s ease",
-                        lineHeight: 1,
-                      }}>⬡</div>
-                    ) : (
-                    <div
-                      style={{
-                        width: 10,
-                        height: 10,
-                        borderRadius: "50%",
-                        background: isActive ? node.color : "#1E2A3A",
-                        transition: "all 0.5s ease",
-                      }}
-                    />
-                    )}
-                  </div>
-                  <span
-                    style={{
-                      fontFamily: "'JetBrains Mono', monospace",
-                      fontSize: 10,
-                      letterSpacing: "0.08em",
-                      color: isActive ? node.color : "#2A3A4E",
-                      transition: "color 0.5s ease",
-                      fontWeight: 600,
-                      fontStyle: node.isAgent ? "italic" : "normal",
-                    }}
-                  >
-                    {node.name}
-                  </span>
-                </div>
-                {/* Connector line */}
-                {i < SCENARIO_NODES.length - 1 && (
-                  <div
-                    style={{
-                      flex: 1,
-                      height: 2,
-                      marginLeft: 6,
-                      marginRight: 6,
-                      marginTop: -20,
-                      position: "relative",
-                      background: "#1E2A3A",
-                      overflow: "visible",
-                    }}
-                  >
-                    {/* Animated pulse */}
-                    {currentStep &&
-                      currentStep.pulse &&
-                      currentStep.pulse.from === i && (
-                        <div
-                          key={step}
-                          style={{
-                            position: "absolute",
-                            top: -3,
-                            left: 0,
-                            width: 8,
-                            height: 8,
-                            borderRadius: "50%",
-                            background:
-                              SCENARIO_NODES[currentStep.pulse.to].color,
-                            boxShadow: `0 0 12px ${SCENARIO_NODES[currentStep.pulse.to].color}`,
-                            animation: "pulseFly 0.8s ease-out forwards",
-                          }}
-                        />
-                      )}
-                    {/* Filled line for active connections */}
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: 0,
-                        left: 0,
-                        height: "100%",
-                        width:
-                          currentStep && currentStep.active.includes(SCENARIO_NODES[i + 1]?.id)
-                            ? "100%"
-                            : "0%",
-                        background: `linear-gradient(90deg, ${SCENARIO_NODES[i].color}80, ${SCENARIO_NODES[i + 1].color}80)`,
-                        transition: "width 0.6s ease",
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Event log / terminal */}
-        <div
-          style={{
-            maxWidth: 700,
-            width: "100%",
-            background: "#080E1A",
-            borderRadius: 12,
-            border: `1px solid ${currentStep?.isAlert ? currentStep.color + "40" : "#1E2A3A"}`,
-            overflow: "hidden",
-            transition: "border-color 0.5s ease",
-            boxShadow: currentStep?.isAlert
-              ? `0 0 40px ${currentStep.color}10`
-              : "0 20px 60px rgba(0,0,0,0.3)",
-            minHeight: 180,
-          }}
-        >
-          {/* Terminal header */}
-          <div
-            style={{
-              padding: "10px 16px",
-              borderBottom: "1px solid #1E2A3A",
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-            }}
-          >
-            <div
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: "50%",
-                background: currentStep?.isAlert ? "#bf616a" : "#a3be8c",
-                boxShadow: currentStep?.isAlert
-                  ? "0 0 8px rgba(248,113,113,0.5)"
-                  : "none",
-                transition: "all 0.5s ease",
-              }}
-            />
-            <span
-              style={{
-                fontFamily: "'JetBrains Mono', monospace",
-                fontSize: 11,
-                color: "#4A5568",
-              }}
-            >
-              nthlayer — live scenario
-            </span>
-          </div>
-
-          {/* Event content */}
-          <div style={{ padding: "24px 28px" }}>
-            {step < 0 ? (
-              <div
-                style={{
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontSize: 13,
-                  color: "#2A3A4E",
-                  textAlign: "center",
-                  padding: "20px 0",
-                }}
-              >
-                ▌ Waiting for scenario to begin...
-              </div>
-            ) : (
-              currentStep && (
-                <div
-                  key={step}
-                  style={{
-                    animation: "fadeUp 0.4s ease-out",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontFamily: "'JetBrains Mono', monospace",
-                      fontSize: 11,
-                      letterSpacing: "0.12em",
-                      textTransform: "uppercase",
-                      color: currentStep.color,
-                      fontWeight: 600,
-                      marginBottom: 8,
-                    }}
-                  >
-                    {currentStep.title}
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: "'Inter', sans-serif",
-                      fontSize: 15,
-                      color: "#F0F0F3",
-                      marginBottom: 10,
-                      lineHeight: 1.6,
-                    }}
-                  >
-                    {currentStep.event}
-                  </div>
-                  <div
-                    style={{
-                      fontFamily: "'JetBrains Mono', monospace",
-                      fontSize: 12,
-                      color: "#9CA3AF",
-                      lineHeight: 1.7,
-                      paddingLeft: 12,
-                      borderLeft: `2px solid ${currentStep.color}40`,
-                    }}
-                  >
-                    {currentStep.detail}
-                  </div>
-                </div>
-              )
-            )}
-          </div>
-
-          {/* Step indicators */}
-          <div
-            style={{
-              padding: "12px 28px 16px",
-              borderTop: "1px solid #1E2A3A",
-              display: "flex",
-              gap: 6,
-              justifyContent: "center",
-            }}
-          >
-            {SCENARIO_STEPS.map((_, i) => (
-              <div
-                key={i}
-                style={{
-                  width: i === step ? 24 : 6,
-                  height: 6,
-                  borderRadius: 3,
-                  background:
-                    i === step
-                      ? SCENARIO_STEPS[i].color
-                      : i < step
-                        ? "#2A3A4E"
-                        : "#1E2A3A",
-                  transition: "all 0.4s ease",
-                }}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Scroll hint */}
-        {step < SCENARIO_STEPS.length - 1 && (
-          <div
-            style={{
-              marginTop: 24,
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: 11,
-              color: "#2A3A4E",
-              animation: "pulse 2s ease-in-out infinite",
-            }}
-          >
-            ↓ scroll to advance
-          </div>
-        )}
-      </div>
-
-      {/* Keyframe animations */}
-      <style>{`
-        @keyframes pulseFly {
-          0% { left: 0%; opacity: 1; }
-          100% { left: calc(100% - 8px); opacity: 0.6; }
-        }
-        @keyframes fadeUp {
-          0% { opacity: 0; transform: translateY(8px); }
-          100% { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes pulse {
-          0%, 100% { opacity: 0.4; }
-          50% { opacity: 0.8; }
-        }
-      `}</style>
-    </div>
-  );
-}
-
-function DemoTeaser() {
-  const ref = useRef(null);
-  const inView = useInView(ref, 0.2);
-  return (
-    <div ref={ref} style={{
-      padding: "100px 24px", textAlign: "center",
-      opacity: inView ? 1 : 0, transform: inView ? "translateY(0)" : "translateY(30px)",
-      transition: "all 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
-    }}>
-      <div style={{
-        maxWidth: 700, margin: "0 auto",
-        background: "rgba(136,192,208,0.03)",
-        border: "1px solid rgba(136,192,208,0.08)",
-        borderRadius: 16, padding: "60px 40px",
-      }}>
-        {/* Decorative topology nodes */}
-        <svg width="200" height="80" viewBox="0 0 200 80" style={{ marginBottom: 32, opacity: 0.7 }}>
-          {/* Edges */}
-          <line x1="40" y1="40" x2="100" y2="20" stroke="#88c0d0" strokeWidth="1" opacity="0.3" />
-          <line x1="40" y1="40" x2="100" y2="60" stroke="#88c0d0" strokeWidth="1" opacity="0.3" />
-          <line x1="100" y1="20" x2="160" y2="40" stroke="#b48ead" strokeWidth="1" opacity="0.3" />
-          <line x1="100" y1="60" x2="160" y2="40" stroke="#b48ead" strokeWidth="1" opacity="0.3" />
-          <line x1="100" y1="20" x2="100" y2="60" stroke="#5e81ac" strokeWidth="1" opacity="0.2" />
-          {/* Nodes */}
-          <circle cx="40" cy="40" r="5" fill="#81a1c1" opacity="0.8" />
-          <circle cx="100" cy="20" r="5" fill="#88c0d0" opacity="0.8" />
-          <circle cx="100" cy="60" r="5" fill="#5e81ac" opacity="0.8" />
-          <circle cx="160" cy="40" r="5" fill="#b48ead" opacity="0.8" />
-          {/* Glow on center nodes */}
-          <circle cx="100" cy="20" r="12" fill="#88c0d0" opacity="0.08" />
-          <circle cx="100" cy="60" r="12" fill="#5e81ac" opacity="0.08" />
-          {/* Animated pulse on the NthLayer node */}
-          <circle cx="160" cy="40" r="5" fill="none" stroke="#b48ead" strokeWidth="1" opacity="0.6">
-            <animate attributeName="r" values="5;14;5" dur="3s" repeatCount="indefinite" />
-            <animate attributeName="opacity" values="0.6;0;0.6" dur="3s" repeatCount="indefinite" />
-          </circle>
-        </svg>
-
-        <h2 style={{
-          fontFamily: "'Instrument Serif', Georgia, serif", fontSize: 42,
-          color: "#F0F0F3", fontWeight: 400, margin: "0 0 20px 0",
-        }}>
-          Watch it work
-        </h2>
-        <p style={{
-          fontFamily: "'Inter', sans-serif", fontSize: 16, color: "#9CA3AF",
-          lineHeight: 1.7, margin: "0 0 36px 0", maxWidth: 560, marginLeft: "auto", marginRight: "auto",
-        }}>
-          29 services. 4 platforms. Two concurrent incidents — one AI model regression,
-          one infrastructure failure. Watch NthLayer detect, separate, and resolve both in 90 seconds.
-        </p>
-        <a href="/demo" style={{
-          fontFamily: "'JetBrains Mono', monospace", fontSize: 13,
-          padding: "14px 28px", borderRadius: 8,
-          background: "rgba(136,192,208,0.1)", color: "#88c0d0",
-          border: "1px solid rgba(136,192,208,0.3)",
-          textDecoration: "none", fontWeight: 600,
-          transition: "all 0.2s ease",
-          cursor: "pointer", display: "inline-block",
-        }}
-          onMouseEnter={e => { e.target.style.background = "rgba(136,192,208,0.15)"; e.target.style.borderColor = "rgba(136,192,208,0.5)"; }}
-          onMouseLeave={e => { e.target.style.background = "rgba(136,192,208,0.1)"; e.target.style.borderColor = "rgba(136,192,208,0.3)"; }}
-        >
-          Launch demo →
-        </a>
-      </div>
-    </div>
-  );
-}
-
-function IndustryGapSection() {
-  const ref = useRef(null);
-  const inView = useInView(ref, 0.1);
-
-  return (
-    <section ref={ref} style={{
-      padding: "100px 24px 80px",
-      maxWidth: 900,
-      margin: "0 auto",
-    }}>
-      {/* Section header */}
-      <div style={{
-        textAlign: "center",
-        marginBottom: 60,
-        opacity: inView ? 1 : 0,
-        transform: inView ? "translateY(0)" : "translateY(30px)",
-        transition: "all 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
-      }}>
-        <div style={{
-          fontFamily: "'JetBrains Mono', monospace",
-          fontSize: 11,
-          letterSpacing: "0.15em",
-          color: "#88c0d0",
-          textTransform: "uppercase",
-          fontWeight: 600,
-          marginBottom: 20,
-        }}>
-          THE GAP
-        </div>
-        <h2 style={{
-          fontFamily: "'Instrument Serif', Georgia, serif",
-          fontSize: 36,
-          color: "#F0F0F3",
-          fontWeight: 400,
-          margin: "0 0 16px 0",
-          lineHeight: 1.2,
-        }}>
-          The industry is describing a problem<br />
-          <span style={{
-            background: "linear-gradient(135deg, #5e81ac, #88c0d0, #8fbcbb)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-          }}>nobody is filling</span>
-        </h2>
-        <p style={{
-          fontFamily: "'Inter', sans-serif",
-          fontSize: 15,
-          color: "#9CA3AF",
-          maxWidth: 560,
-          margin: "0 auto",
-          lineHeight: 1.7,
-          fontWeight: 300,
-        }}>
-          Every major voice in observability, reliability, and AI operations is converging
-          on the same conclusion: traditional monitoring cannot tell you whether an AI agent
-          is making good decisions. Here's what they're saying.
-        </p>
-      </div>
-
-      {/* Evidence cards */}
-      <div style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 16,
-      }}>
-        {GAP_EVIDENCE.map((item, i) => (
-          <div key={i} style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 20,
-            padding: "24px 28px",
-            background: "rgba(11,17,32,0.5)",
-            border: "1px solid #1E2A3A",
-            borderLeft: `3px solid ${item.color}`,
-            borderRadius: "0 10px 10px 0",
-            opacity: inView ? 1 : 0,
-            transform: inView ? "translateY(0)" : "translateY(20px)",
-            transition: `all 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${0.1 + i * 0.08}s`,
-          }}>
-            {/* Left: source info */}
-            <div style={{ minWidth: 160, flexShrink: 0 }}>
-              <div style={{
-                fontFamily: "'Inter', sans-serif",
-                fontSize: 14,
-                color: "#F0F0F3",
-                fontWeight: 600,
-                marginBottom: 4,
-              }}>
-                {item.source}
-              </div>
-              <div style={{
-                fontFamily: "'Inter', sans-serif",
-                fontSize: 11,
-                color: "#6B7F99",
-                lineHeight: 1.4,
-                marginBottom: 4,
-              }}>
-                {item.role}
-              </div>
-              <div style={{
-                fontFamily: "'JetBrains Mono', monospace",
-                fontSize: 10,
-                color: "#4A5568",
-              }}>
-                {item.context}
-              </div>
-            </div>
-
-            {/* Right: insight + gap */}
-            <div style={{ flex: 1, minWidth: 280 }}>
-              <p style={{
-                fontFamily: "'Inter', sans-serif",
-                fontSize: 13,
-                color: "#9CA3AF",
-                lineHeight: 1.65,
-                margin: "0 0 10px 0",
-                fontStyle: "italic",
-              }}>
-                "{item.insight}"
-              </p>
-              <p style={{
-                fontFamily: "'Inter', sans-serif",
-                fontSize: 12,
-                color: item.color,
-                margin: 0,
-                fontWeight: 500,
-              }}>
-                → {item.gap}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* NthLayer answer */}
-      <div style={{
-        marginTop: 48,
-        textAlign: "center",
-        opacity: inView ? 1 : 0,
-        transform: inView ? "translateY(0)" : "translateY(20px)",
-        transition: "all 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.6s",
-      }}>
-        <div style={{
-          maxWidth: 640,
-          margin: "0 auto",
-          padding: "32px 36px",
-          background: "rgba(136,192,208,0.04)",
-          border: "1px solid rgba(136,192,208,0.12)",
-          borderRadius: 12,
-        }}>
-          <p style={{
-            fontFamily: "'Instrument Serif', Georgia, serif",
-            fontSize: 22,
-            color: "#F0F0F3",
-            fontWeight: 400,
-            margin: "0 0 12px 0",
-            lineHeight: 1.3,
-          }}>
-            NthLayer fills the gap.
-          </p>
-          <p style={{
-            fontFamily: "'Inter', sans-serif",
-            fontSize: 14,
-            color: "#9CA3AF",
-            margin: "0 0 6px 0",
-            lineHeight: 1.7,
-            fontWeight: 300,
-          }}>
-            Judgment quality as a first-class SLO. Spec-driven correlation across declared
-            dependencies. A closed loop from incident back to contract.
-          </p>
-          <p style={{
-            fontFamily: "'Inter', sans-serif",
-            fontSize: 14,
-            color: "#9CA3AF",
-            margin: 0,
-            lineHeight: 1.7,
-            fontWeight: 300,
-          }}>
-            Not inside the agent. Outside it. Because enforcement outside the system
-            is governance. Instructions inside the system are hope.
-          </p>
-        </div>
-
-        {/* Read the full analysis link */}
-        <a href="/research" style={{
-          display: "inline-block",
-          marginTop: 24,
-          fontFamily: "'JetBrains Mono', monospace",
-          fontSize: 12,
-          color: "#6B7F99",
-          textDecoration: "none",
-          letterSpacing: "0.05em",
-          transition: "color 0.2s ease",
-        }}
-          onMouseEnter={e => e.target.style.color = "#88c0d0"}
-          onMouseLeave={e => e.target.style.color = "#6B7F99"}
-        >
-          Read the full analysis →
-        </a>
-      </div>
-    </section>
-  );
-}
-
-function CTASection() {
-  const ref = useRef(null);
-  const inView = useInView(ref, 0.2);
-  return (
-    <div ref={ref} style={{
-      padding: "80px 24px 100px", textAlign: "center",
-      opacity: inView ? 1 : 0, transform: inView ? "translateY(0)" : "translateY(30px)",
-      transition: "all 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
-    }}>
-      <h2 style={{
-        fontFamily: "'Instrument Serif', Georgia, serif", fontSize: 48,
-        color: "#F0F0F3", fontWeight: 400, margin: "0 0 16px 0",
-      }}>
-        Built on OpenSRM
-      </h2>
-      <p style={{
-        fontFamily: "'Inter', sans-serif", fontSize: 16, color: "#9CA3AF",
-        maxWidth: 520, margin: "0 auto 40px auto", lineHeight: 1.7,
-      }}>
-        Every layer is open source. The OpenSRM specification is the shared contract.
-        Adopt one layer or the full lifecycle. Start with the manifest.
-      </p>
-      <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-        <a href="https://github.com/rsionnach/opensrm" target="_blank" rel="noopener" style={{
-          fontFamily: "'JetBrains Mono', monospace", fontSize: 13,
-          padding: "14px 32px", borderRadius: 8,
-          background: "rgba(136,192,208,0.1)", color: "#88c0d0",
-          border: "1px solid rgba(136,192,208,0.3)",
-          textDecoration: "none", fontWeight: 600,
-          transition: "all 0.2s ease",
-          cursor: "pointer",
-        }}
-          onMouseEnter={e => { e.target.style.background = "rgba(136,192,208,0.15)"; e.target.style.borderColor = "rgba(136,192,208,0.5)"; }}
-          onMouseLeave={e => { e.target.style.background = "rgba(136,192,208,0.1)"; e.target.style.borderColor = "rgba(136,192,208,0.3)"; }}
-        >
-          View the spec →
-        </a>
-        <a href="https://github.com/rsionnach" target="_blank" rel="noopener" style={{
-          fontFamily: "'JetBrains Mono', monospace", fontSize: 13,
-          padding: "14px 32px", borderRadius: 8,
-          background: "transparent", color: "#9CA3AF",
-          border: "1px solid #1E2A3A",
-          textDecoration: "none", fontWeight: 600,
-          transition: "all 0.2s ease",
-          cursor: "pointer",
-        }}
-          onMouseEnter={e => { e.target.style.borderColor = "#2A3A4E"; e.target.style.color = "#F0F0F3"; }}
-          onMouseLeave={e => { e.target.style.borderColor = "#1E2A3A"; e.target.style.color = "#9CA3AF"; }}
-        >
-          All repositories
-        </a>
-      </div>
-    </div>
-  );
-}
-
-function NthLayerSite() {
-  const [activeIdx, setActiveIdx] = useState(-1);
-  const heroRef = useRef(null);
-  const [heroVisible, setHeroVisible] = useState(false);
-
-  useEffect(() => {
-    setTimeout(() => setHeroVisible(true), 100);
-  }, []);
-
-  const handleInView = useCallback((idx) => {
-    setActiveIdx(idx);
-  }, []);
-
-  return (
-    <div style={{
-      background: "#0B1120", minHeight: "100vh", color: "#F0F0F3",
-      fontFamily: "'Inter', sans-serif",
-    }}>
-      <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-
-      {/* Nav */}
-      <nav style={{
-        position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-        padding: "16px 32px", display: "flex", alignItems: "center", justifyContent: "space-between",
-        background: "rgba(11,17,32,0.8)", backdropFilter: "blur(12px)",
-        borderBottom: "1px solid rgba(30,42,58,0.5)",
-      }}>
-        <a href="https://nthlayer.io" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-          <img src="data:image/png;base64,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" alt="NthLayer" style={{ height: 38, width: "auto", flexShrink: 0 }} />
-          <span style={{
-            fontFamily: "'IBM Plex Sans', sans-serif",
-            fontSize: 21, fontWeight: 600, color: "#F0F0F3",
-            letterSpacing: "-0.01em",
-          }}>NthLayer</span>
-        </a>
-        <div style={{ display: "flex", gap: 28, alignItems: "center" }}>
-          {[
-            { label: "Spec", href: "https://github.com/rsionnach/opensrm" },
-            { label: "Demo", href: "/demo" },
-            { label: "Research", href: "/research" },
-            { label: "Articles", href: "https://dev.to/rsionnach" },
-          ].map((item) => (
-            <a key={item.label} href={item.href} target={item.href.startsWith("http") ? "_blank" : undefined} rel={item.href.startsWith("http") ? "noopener" : undefined} style={{
-              fontFamily: "'JetBrains Mono', monospace", fontSize: 12,
-              color: "#9CA3AF", textDecoration: "none", letterSpacing: "0.03em",
-            }}>{item.label}</a>
-          ))}
-          <a href="https://github.com/rsionnach" target="_blank" rel="noopener" style={{
-            fontFamily: "'JetBrains Mono', monospace", fontSize: 12,
-            color: "#F0F0F3", background: "rgba(240,240,243,0.08)", padding: "8px 16px",
-            border: "1px solid rgba(240,240,243,0.15)",
-            borderRadius: 6, textDecoration: "none", fontWeight: 600,
-          }}>GitHub</a>
-        </div>
-      </nav>
-
-      {/* Hero */}
-      <section ref={heroRef} style={{
-        minHeight: "100vh", display: "flex", flexDirection: "column",
-        alignItems: "center", justifyContent: "center",
-        position: "relative", overflow: "hidden", padding: "80px 24px 60px",
-      }}>
-        <HeroParticles />
-
-        {/* Gradient orbs */}
-        <div style={{
-          position: "absolute", top: "10%", left: "20%",
-          width: 500, height: 500, borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(136,192,208,0.06) 0%, transparent 70%)",
-          pointerEvents: "none",
-        }} />
-        <div style={{
-          position: "absolute", bottom: "15%", right: "15%",
-          width: 400, height: 400, borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(136,192,208,0.05) 0%, transparent 70%)",
-          pointerEvents: "none",
-        }} />
-
-        <div style={{
-          position: "relative", zIndex: 1, textAlign: "center",
-          opacity: heroVisible ? 1 : 0,
-          transform: heroVisible ? "translateY(0)" : "translateY(30px)",
-          transition: "all 1.2s cubic-bezier(0.16, 1, 0.3, 1)",
-        }}>
-          <h1 style={{
-            fontFamily: "'Instrument Serif', Georgia, serif",
-            fontSize: "clamp(40px, 6vw, 72px)",
-            fontWeight: 400, lineHeight: 1.08, margin: "0 0 24px 0",
-            maxWidth: 800,
-          }}>
-            Your agents are making<br />
-            <span style={{
-              background: "linear-gradient(135deg, #5e81ac, #88c0d0, #8fbcbb)",
-              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-            }}>
-              decisions in the dark
-            </span>
-          </h1>
-
-          <p style={{
-            fontFamily: "'Inter', sans-serif", fontSize: 18, color: "#9CA3AF",
-            maxWidth: 540, margin: "0 auto 48px auto", lineHeight: 1.7, fontWeight: 300,
-          }}>
-            The open reliability standard for AI agent systems.
-          </p>
-
-          <div style={{ display: "flex", gap: 16, justifyContent: "center" }}>
-            <a href="/demo" style={{
-              fontFamily: "'JetBrains Mono', monospace", fontSize: 13,
-              padding: "14px 28px", borderRadius: 8,
-              background: "rgba(136,192,208,0.1)", color: "#88c0d0",
-              border: "1px solid rgba(136,192,208,0.3)",
-              textDecoration: "none", fontWeight: 600,
-              cursor: "pointer",
-            }}>See how it works →</a>
-            <a href="https://github.com/rsionnach/opensrm" target="_blank" rel="noopener" style={{
-              fontFamily: "'JetBrains Mono', monospace", fontSize: 13,
-              padding: "14px 28px", borderRadius: 8, color: "#9CA3AF",
-              border: "1px solid #1E2A3A", textDecoration: "none",
-              cursor: "pointer",
-            }}>Read the spec</a>
-          </div>
-        </div>
-
-        {/* Lifecycle bar at bottom of hero */}
-        <div style={{
-          position: "relative", zIndex: 1, marginTop: 48, width: "100%",
-          opacity: heroVisible ? 1 : 0,
-          transition: "opacity 1.4s ease 0.4s",
-        }}>
-          <LifecycleBar activeIndex={activeIdx} />
-        </div>
-
-        {/* Scroll indicator */}
-        <div style={{
-          position: "relative", zIndex: 1, marginTop: 32,
-          display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
-          opacity: heroVisible ? 1 : 0,
-          transition: "opacity 1.8s ease 0.8s",
-          animation: "scrollBounce 2s ease-in-out infinite",
-        }}>
-          <span style={{
-            fontFamily: "'JetBrains Mono', monospace", fontSize: 10,
-            letterSpacing: "0.15em", color: "#4A5568", textTransform: "uppercase",
-          }}>scroll</span>
-          <svg width="16" height="24" viewBox="0 0 16 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M8 4 L8 18 M3 14 L8 19 L13 14" stroke="#4A5568" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </div>
-        <style>{`
-          @keyframes scrollBounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(6px); }
-          }
-        `}</style>
-      </section>
-
-      {/* Problem statement */}
-      <section style={{
-        padding: "60px 24px 40px", maxWidth: 700, margin: "0 auto", textAlign: "center",
-      }}>
-        <h2 style={{
-          fontFamily: "'Instrument Serif', Georgia, serif", fontSize: 36,
-          color: "#F0F0F3", fontWeight: 400, margin: "0 0 20px 0", lineHeight: 1.2,
-        }}>
-          Traditional monitoring tells you an agent is <em style={{ color: "#a3be8c" }}>running</em>.
-          <br />It doesn't tell you it's <em style={{ color: "#bf616a" }}>wrong</em>.
-        </h2>
-        <p style={{
-          fontFamily: "'Inter', sans-serif", fontSize: 15, color: "#9CA3AF",
-          lineHeight: 1.8, margin: 0,
-        }}>
-          Availability, latency, throughput — you've been measuring these for decades.
-          But when an AI agent approves a bad loan, routes an incident to the wrong team,
-          or generates a hallucinated recommendation, your dashboards stay green.
-          NthLayer adds the missing dimension: judgment quality.
-          Measure it. Gate deploys on it. Respond to incidents with it. Close the loop.
-        </p>
-      </section>
-
-      {/* Animated scenario */}
-      <ScenarioAnimation />
-
-      {/* Demo teaser */}
-      <DemoTeaser />
-
-      {/* Sticky lifecycle bar */}
-      <div id="layers" style={{
-        position: "sticky", top: 64, zIndex: 50, padding: "16px 0",
-        background: "rgba(11,17,32,0.9)", backdropFilter: "blur(12px)",
-        borderBottom: "1px solid rgba(30,42,58,0.3)",
-      }}>
-        <LifecycleBar activeIndex={activeIdx} />
-      </div>
-
-      {/* Component sections */}
-      {COMPONENTS.map((comp, i) => (
-        <ComponentSection
-          key={comp.id}
-          component={comp}
-          index={i}
-          onInView={handleInView}
-        />
-      ))}
-
-      {/* Industry gap evidence */}
-      <IndustryGapSection />
-
-      {/* Closed loop */}
-      <LoopDiagram />
-
-      {/* CTA */}
-      <CTASection />
-
-      {/* Footer */}
-      <footer style={{
-        padding: "40px 32px", borderTop: "1px solid #1E2A3A",
-        display: "flex", justifyContent: "space-between", alignItems: "center",
-        maxWidth: 1100, margin: "0 auto",
-      }}>
-        <span style={{
-          fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "#81a1c1",
-        }}>
-          NthLayer — built on OpenSRM
-        </span>
-        <div style={{ display: "flex", gap: 20 }}>
-          {[
-            { label: "GitHub", href: "https://github.com/rsionnach" },
-            { label: "Spec", href: "https://github.com/rsionnach/opensrm" },
-            { label: "robfox.dev", href: "https://robfox.dev" },
-          ].map((link) => (
-            <a key={link.label} href={link.href} target="_blank" rel="noopener" style={{
-              fontFamily: "'JetBrains Mono', monospace", fontSize: 11,
-              color: "#6B7F99", textDecoration: "none",
-            }}>{link.label}</a>
-          ))}
-        </div>
-      </footer>
-    </div>
-  );
-}
-
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(React.createElement(NthLayerSite));
+  var io = new IntersectionObserver(function (entries) {
+    if (!entries[0].isIntersecting) return;
+    io.disconnect();
+    setTimeout(function () {
+      verdict.className = 'verdict v-overridden';
+      verdict.innerHTML = settled;
+      row.classList.add('settled');
+      rate.classList.add('up');
+      rateVal.textContent = '3.1%';
+    }, 1600);
+  }, { threshold: 0.6 });
+  io.observe(row);
+})();
 </script>
 </body>
 </html>
