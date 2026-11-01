@@ -3,34 +3,42 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NthLayer — Your dashboards say it's up. NthLayer tells you whether it was right.</title>
+<title>NthLayer — Your dashboards say it’s up. NthLayer tells you whether it was right.</title>
 <meta name="description" content="Agents, rules and people make calls that no test can check. NthLayer records each one, waits for the outcome, and turns how often they hold up into SLOs and alerts in the Prometheus and Grafana you already run.">
 <meta name="theme-color" content="#0B1120">
 <link rel="canonical" href="https://nthlayer.io/">
-<meta property="og:title" content="NthLayer — Your dashboards say it's up. NthLayer tells you whether it was right.">
+<meta property="og:title" content="NthLayer — Your dashboards say it’s up. NthLayer tells you whether it was right.">
 <meta property="og:description" content="NthLayer records every decision no test can check, waits for the outcome, and turns how often they hold up into SLOs and alerts.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://nthlayer.io">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="NthLayer — Your dashboards say it's up. NthLayer tells you whether it was right.">
+<meta name="twitter:title" content="NthLayer — Your dashboards say it’s up. NthLayer tells you whether it was right.">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Instrument+Serif&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>
+// Before first paint: mark JS, and opt into the ledger animation only when motion is welcome.
+(function (d) {
+  d.classList.add('js');
+  if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('anim');
+})(document.documentElement);
+</script>
+<link rel="preload" href="/fonts/instrument-serif-latin-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/ibm-plex-sans-latin-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/fonts.css">
 <style>
 :root {
   color-scheme: dark;
 
   --bg: #0B1120;
-  --bg-band: #0D1424;
+  --bg-band: #0F1628;
   --bg-sunk: #080E1A;
   --bg-raised: #101827;
   --bg-nav: rgba(11, 17, 32, 0.86);
   --line: #1E2A3A;
   --line-strong: #2A3A4E;
   --text: #F0F0F3;
+  --text-lede: #D8DEE9;
   --text-body: #A8B0BD;
   --text-muted: #7D8BA1;
   --code: #C9D1DC;
@@ -38,18 +46,24 @@
   --frost-2: #81A1C1;
   --frost-3: #5E81AC;
   --held: #A3BE8C;
-  --reversed: #D0737C;
-  --overridden: #EBCB8B;
+  --bad: #D0737C;
+  --warn: #EBCB8B;
   --purple: #B48EAD;
 
-  --serif: 'Instrument Serif', Georgia, serif;
-  --sans: 'IBM Plex Sans', system-ui, sans-serif;
-  --mono: 'JetBrains Mono', ui-monospace, monospace;
+  --serif: 'Instrument Serif', 'Instrument Serif Fallback', Georgia, serif;
+  --sans: 'IBM Plex Sans', 'IBM Plex Sans Fallback', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', 'JetBrains Mono Fallback', ui-monospace, monospace;
+
+  /* Mono scale: three steps only. */
+  --mono-label: 0.75rem;   /* uppercase tracked labels */
+  --mono-data: 0.8125rem;  /* times, values, arrow labels, file names */
+  --mono-code: 0.875rem;   /* code blocks and commands */
 
   --gutter: clamp(16px, 5vw, 48px);
   --wrap: 1120px;
-  --act-gap: clamp(88px, 12vw, 160px);
+  --act-gap: clamp(72px, 9vw, 120px);
   --section-gap: clamp(64px, 8vw, 104px);
+  --lede-to-content: 40px;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -58,7 +72,7 @@ html { scroll-behavior: smooth; scroll-padding-top: 80px; scrollbar-color: var(-
 body {
   background: var(--bg);
   color: var(--text-body);
-  font: 400 17px/1.65 var(--sans);
+  font: 400 1.0625rem/1.65 var(--sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -66,22 +80,26 @@ body {
 a { color: var(--frost); text-underline-offset: 3px; text-decoration-thickness: 1px; }
 a:hover { color: var(--text); }
 :focus-visible { outline: 2px solid var(--frost); outline-offset: 3px; border-radius: 4px; }
-code, pre, kbd { font-family: var(--mono); font-size: 0.86em; }
-:not(pre) > code { white-space: nowrap; color: var(--text); background: var(--bg-raised); padding: 0.1em 0.4em; border-radius: 4px; border: 1px solid var(--line); }
+code, kbd { font-family: var(--mono); font-size: 0.86em; }
+pre { font-family: var(--mono); }
+pre code { font-size: inherit; }
+:not(pre) > code { color: var(--text); background: var(--bg-raised); padding: 0.1em 0.4em; border-radius: 4px; border: 1px solid var(--line); overflow-wrap: anywhere; }
 img { display: block; }
+.nw { white-space: nowrap; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 
-.skip { position: absolute; left: -9999px; top: 8px; background: var(--text); color: var(--bg); padding: 8px 14px; border-radius: 6px; z-index: 200; }
+.skip { position: absolute; left: -9999px; top: 8px; background: var(--text); color: var(--bg); padding: 8px 16px; border-radius: 6px; z-index: 200; }
 .skip:focus { left: 8px; }
 .skip:hover { color: var(--bg); }
 
 .wrap { max-width: var(--wrap); margin: 0 auto; padding: 0 var(--gutter); }
 
 h1, h2, h3 { color: var(--text); font-weight: 400; text-wrap: balance; }
-h2 { font-family: var(--serif); font-size: clamp(2rem, 4.2vw, 3rem); line-height: 1.08; letter-spacing: -0.01em; margin-bottom: 20px; }
-h3 { font-family: var(--sans); font-size: 1.05rem; font-weight: 600; line-height: 1.35; margin-bottom: 8px; }
+h2 { font-family: var(--serif); font-size: clamp(2.25rem, 4.2vw, 3rem); line-height: 1.08; letter-spacing: -0.01em; margin-bottom: 20px; }
+/* Label headings: one role. */
+h3 { font-family: var(--sans); font-size: 1.0625rem; font-weight: 600; line-height: 1.35; margin-bottom: 8px; }
 p, dd, li, figcaption { text-wrap: pretty; }
-.lede { font-size: 1.15rem; color: var(--text-body); max-width: 62ch; }
+.lede { font-size: 1.25rem; line-height: 1.55; color: var(--text-lede); max-width: 60ch; }
 .prose { max-width: 66ch; }
 .prose p + p { margin-top: 1em; }
 
@@ -101,9 +119,9 @@ p, dd, li, figcaption { text-wrap: pretty; }
 .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); font-weight: 600; font-size: 1.25rem; letter-spacing: -0.01em; }
 .brand img { width: 28px; height: 28px; border-radius: 6px; object-fit: cover; }
 .nav-links { display: flex; align-items: center; gap: 28px; list-style: none; }
-.nav-links a { color: var(--text-body); text-decoration: none; font-size: 0.94rem; }
+.nav-links a { color: var(--text-body); text-decoration: none; font-size: 0.9375rem; }
 .nav-links a:hover { color: var(--text); }
-.nav-links .gh { color: var(--text); border: 1px solid var(--line-strong); padding: 7px 14px; border-radius: 8px; }
+.nav-links .gh { color: var(--text); border: 1px solid var(--line-strong); padding: 8px 16px; border-radius: 8px; }
 .nav-links .gh:hover { border-color: var(--frost-3); }
 .nav-menu { display: none; }
 
@@ -119,27 +137,29 @@ p, dd, li, figcaption { text-wrap: pretty; }
 .hero h1 .turn { display: block; color: var(--frost); }
 .hero .lede { margin-bottom: 36px; }
 
-.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 24px; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 24px; }
 .install {
   display: inline-flex; align-items: center; gap: 14px;
   background: var(--bg-sunk); border: 1px solid var(--line-strong); border-radius: 10px;
-  padding: 6px 6px 6px 18px; font-family: var(--mono); font-size: 0.92rem; color: var(--text);
+  padding: 6px 6px 6px 18px; font-family: var(--mono); font-size: var(--mono-code); color: var(--text);
   max-width: 100%;
 }
+.install:has(.copy[hidden]) { padding-right: 18px; min-height: 50px; }
 .install .prompt { color: var(--text-muted); user-select: none; }
 .install code { background: none; border: 0; padding: 0; font-size: 1em; white-space: nowrap; overflow-x: auto; }
 .copy {
-  font: 500 0.82rem var(--sans); color: var(--bg); background: var(--frost);
+  font: 500 0.8125rem var(--sans); color: var(--bg); background: var(--frost);
   border: 0; border-radius: 7px; padding: 8px 14px; min-height: 36px; cursor: pointer; flex: none;
   transition: background 0.2s var(--ease);
 }
 .copy:hover { background: var(--text); color: var(--bg); }
 .copy[data-done] { background: var(--held); }
-.textlink { font-size: 0.98rem; text-decoration: none; }
+.textlink { font-size: 1rem; text-decoration: none; }
 .textlink:hover { text-decoration: underline; }
 
-/* Decision ledger: the one animated moment */
+/* Verdict ledger: the one animated moment */
 .ledger {
+  container: ledger / inline-size;
   margin-top: clamp(48px, 6vw, 72px);
   background: var(--bg-sunk);
   border: 1px solid var(--line);
@@ -149,83 +169,137 @@ p, dd, li, figcaption { text-wrap: pretty; }
 }
 .ledger-head {
   display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px;
-  padding: 16px 22px; border-bottom: 1px solid var(--line);
-  font-family: var(--mono); font-size: 0.8rem; color: var(--text-muted);
+  padding: 16px 24px; border-bottom: 1px solid var(--line);
+  font-family: var(--mono); font-size: var(--mono-data); color: var(--text-muted);
 }
 .ledger-head strong { color: var(--text); font-weight: 500; }
 .rate { color: var(--text); font-variant-numeric: tabular-nums; }
-.rate b { font-weight: 500; transition: color 0.6s var(--ease); }
-.rate.up b { color: var(--reversed); }
-.ledger table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
-.ledger th { text-align: left; font: 500 0.74rem var(--mono); color: var(--text-muted); padding: 12px 22px 8px; text-transform: uppercase; letter-spacing: 0.06em; }
-.ledger td { padding: 13px 22px; border-top: 1px solid var(--line); vertical-align: top; }
-.ledger td.t, .ledger td.c { font-family: var(--mono); font-size: 0.84rem; color: var(--text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rate b { font-weight: 500; color: var(--bad); }
+.ledger-scroll { overflow-x: auto; }
+.ledger table { width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
+.ledger th { text-align: left; font: 500 var(--mono-label) var(--mono); color: var(--text-muted); padding: 12px 24px 8px; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
+.ledger td { padding: 12px 24px; border-top: 1px solid var(--line); vertical-align: top; overflow-wrap: anywhere; }
+.ledger .t, .ledger .c { width: 1%; }
+.ledger .c { text-align: right; }
+.ledger td.t, .ledger td.c { font-family: var(--mono); font-size: var(--mono-data); color: var(--text-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .ledger td.who { color: var(--text); white-space: nowrap; }
-.ledger td.who span { display: block; font-size: 0.8rem; color: var(--text-muted); }
-.ledger td.what { color: var(--text-body); }
-.verdict { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; font: 500 0.8rem var(--mono); white-space: nowrap; }
-.verdict::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: none; }
+.ledger td.who span { display: block; font-size: 0.8125rem; color: var(--text-muted); }
+.ledger td.what { color: var(--text-body); text-wrap: pretty; }
+.ledger td.what code { white-space: nowrap; }
+.verdict { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; font: 500 var(--mono-data) var(--mono); white-space: nowrap; }
+.verdict::before { content: ""; width: 8px; height: 8px; box-sizing: border-box; border-radius: 50%; background: currentColor; border: 1.5px solid currentColor; flex: none; }
 .v-confirmed { color: var(--held); }
-.v-overridden { color: var(--reversed); }
-.v-partial { color: var(--overridden); }
+.v-overridden { color: var(--bad); }
 .v-expired { color: var(--text-muted); }
-.v-expired::before { background: transparent; border: 1.5px dashed currentColor; }
+.v-expired::before { background: transparent; border-style: dashed; }
 .v-pending { color: var(--frost-2); }
-.v-pending::before { background: transparent; border: 1.5px solid currentColor; }
-.verdict small { flex-basis: 100%; padding-left: 16px; font: 400 0.76rem var(--sans); color: var(--text-muted); white-space: normal; }
-.row-live { transition: background-color 0.8s var(--ease); }
-.row-live.settled { background-color: rgba(208, 115, 124, 0.07); }
-.ledger-foot { padding: 12px 22px; border-top: 1px solid var(--line); font-size: 0.8rem; color: var(--text-muted); }
+.v-pending::before { background: transparent; }
+.verdict small { flex-basis: 100%; padding-left: 16px; font: 400 0.8125rem/1.45 var(--sans); color: var(--text-muted); white-space: normal; }
+.ledger-foot { padding: 12px 24px; border-top: 1px solid var(--line); font-size: 0.8125rem; color: var(--text-muted); }
+.ledger-foot span { display: block; max-width: 62ch; }
+
+/* The live row. Settled is the default; .anim (set before paint) holds it pending until .ledger.settled. */
+#live-row { background-color: rgba(208, 115, 124, 0.07); transition: background-color 0.6s var(--ease); }
+#live-verdict::before { transition: background-color 0.3s var(--ease), border-color 0.3s var(--ease); }
+.lbls, .rate-num { display: inline-grid; }
+.lbls > span, .rate-num > span { grid-area: 1 / 1; transition: opacity 0.25s var(--ease), transform 0.25s var(--ease); }
+.lbl-pending { color: var(--frost-2); opacity: 0; transform: translateY(-4px); }
+.r-pre { opacity: 0; transform: translateY(-4px); }
+#live-verdict small { transition: opacity 0.23s var(--ease) 0.55s; }
+.ledger.settled .rate-num > span { transition-duration: 0.2s; transition-delay: 0.4s; }
+.anim .ledger:not(.settled) #live-row { background-color: transparent; }
+.anim .ledger:not(.settled) #live-verdict { color: var(--frost-2); }
+.anim .ledger:not(.settled) #live-verdict::before { background-color: transparent; }
+.anim .ledger:not(.settled) .lbl-pending,
+.anim .ledger:not(.settled) .r-pre { opacity: 1; transform: none; }
+.anim .ledger:not(.settled) .lbl-settled,
+.anim .ledger:not(.settled) .r-post { opacity: 0; transform: translateY(4px); }
+.anim .ledger:not(.settled) #live-verdict small { opacity: 0; }
+
+/* Stacked rows when the ledger itself is narrow. In em, so larger text stacks it too. */
+@container ledger (max-width: 52em) {
+  .ledger thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .ledger table, .ledger tbody, .ledger tr, .ledger td { display: block; }
+  .ledger tbody tr { padding: 16px 20px; border-top: 1px solid var(--line); display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: 4px 12px; }
+  .ledger td, .ledger td.t, .ledger td.c { padding: 0; border: 0; width: auto; text-align: left; }
+  .ledger td.t { grid-column: 1; white-space: normal; }
+  .ledger td.who { grid-column: 2; white-space: normal; }
+  .ledger td.what { grid-column: 1 / -1; padding: 4px 0; }
+  .ledger td.c { grid-column: 1; white-space: normal; }
+  .ledger td.c::before { content: attr(data-label); display: block; font-size: var(--mono-label); }
+  .ledger td.v { grid-column: 2; align-self: end; }
+  .verdict { white-space: normal; }
+  .ledger-head, .ledger-foot { padding-left: 20px; padding-right: 20px; }
+}
 
 /* ── Thesis ──────────────────────────────────────── */
 .thesis .wrap { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: clamp(32px, 6vw, 96px); align-items: start; }
-.thesis h2 { font-size: clamp(2.1rem, 4.6vw, 3.4rem); margin: 0; }
+.thesis h2 { font-size: clamp(2.25rem, 4.6vw, 3.4rem); margin: 0; }
 .thesis h2 em { font-style: normal; color: var(--frost); }
 
 /* ── AI SRE ──────────────────────────────────────── */
 .sre-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(32px, 6vw, 88px); align-items: start; margin-top: 8px; }
-.timeline { list-style: none; position: relative; }
-.timeline li { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 20px; padding: 0 0 28px; position: relative; }
-.timeline li::after { content: ""; position: absolute; left: 83px; top: 12px; bottom: 0; width: 1px; background: var(--line-strong); z-index: 0; }
+.timeline { list-style: none; position: relative; --tl-time: 64px; --tl-gap: 20px; --tl-pad: 24px; }
+.timeline li { display: grid; grid-template-columns: var(--tl-time) minmax(0, 1fr); gap: var(--tl-gap); padding: 0 0 28px; position: relative; }
+.timeline li::after { content: ""; position: absolute; left: calc(var(--tl-time) + var(--tl-gap) - 1px); top: 12px; bottom: 0; width: 1px; background: var(--line-strong); z-index: 0; }
 .timeline li:last-child::after { display: none; }
-.timeline time { font: 500 0.86rem var(--mono); color: var(--text-muted); padding-top: 2px; font-variant-numeric: tabular-nums; }
-.timeline .body { position: relative; padding-left: 22px; }
-.timeline .body::before { content: ""; position: absolute; left: -4px; top: 9px; width: 9px; height: 9px; border-radius: 50%; background: var(--dot, var(--frost-2)); box-shadow: 0 0 0 4px var(--bg-band); z-index: 1; }
+.timeline time { font: 500 var(--mono-data) var(--mono); color: var(--text-muted); padding-top: 3px; font-variant-numeric: tabular-nums; }
+.timeline .body { position: relative; padding-left: var(--tl-pad); }
+.timeline .body::before { content: ""; position: absolute; left: -5px; top: 9px; width: 9px; height: 9px; border-radius: 50%; background: var(--dot, var(--frost-2)); box-shadow: 0 0 0 4px var(--bg-band); z-index: 1; }
 .timeline p { color: var(--text-body); }
 .timeline p strong { color: var(--text); font-weight: 500; }
-.timeline .effect { display: block; margin-top: 4px; font: 400 0.84rem var(--mono); color: var(--dot, var(--frost-2)); }
+.timeline .effect { display: block; margin-top: 4px; overflow-wrap: anywhere; font: 400 var(--mono-data) var(--mono); color: var(--dot, var(--frost-2)); }
 .demo-link { display: inline-block; margin-top: 12px; font-weight: 500; text-decoration: none; }
 .demo-link:hover { text-decoration: underline; }
-.scenario-note { font-size: 0.82rem; color: var(--text-muted); margin: -8px 0 0 84px; }
+.scenario-note { font-size: 0.8125rem; color: var(--text-muted); margin: -8px 0 0 calc(var(--tl-time) + var(--tl-gap) + var(--tl-pad)); }
 
 /* ── Signals ─────────────────────────────────────── */
-.gauges { list-style: none; margin-top: 44px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(24px, 4vw, 48px); }
+.gauges { list-style: none; margin-top: var(--lede-to-content); display: grid; grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr)); gap: 40px clamp(24px, 4vw, 48px); }
 .gauge { display: flex; flex-direction: column; }
-.gauge h3 { margin-bottom: 6px; }
-.gauge p { font-size: 0.95rem; }
+.gauge h3 { margin-bottom: 8px; }
+.gauge p { font-size: 0.9375rem; max-width: 62ch; }
 .meter { margin-top: auto; padding-top: 20px; }
 .meter-track { position: relative; height: 6px; border-radius: 3px; background: var(--line); }
 .meter-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: var(--held); }
-.meter-fill.over { background: var(--reversed); }
+.meter-fill.over { background: var(--bad); }
 /* Scale is 0 to 2x target, so the target mark sits at the midpoint. */
 .meter-target { position: absolute; left: 50%; top: -5px; bottom: -5px; width: 2px; background: var(--text); border-radius: 1px; }
-.meter-read { display: flex; justify-content: space-between; gap: 12px; margin-top: 10px; font: 400 0.8rem var(--mono); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.meter-read { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; margin-top: 12px; font: 400 var(--mono-data) var(--mono); color: var(--text-muted); font-variant-numeric: tabular-nums; }
 .meter-read b { font-weight: 500; color: var(--text); }
-.meter-read b.over { color: var(--reversed); }
-.signals-more { margin-top: 40px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 clamp(24px, 4vw, 48px); }
-.signals-more div { padding-top: 18px; border-top: 1px solid var(--line); }
-.signals-more dt { color: var(--text); font-weight: 600; margin-bottom: 4px; }
-.signals-more dd { font-size: 0.95rem; }
-.example-note { margin-top: 20px; font-size: 0.82rem; color: var(--text-muted); }
+.meter-read b.over { color: var(--bad); }
+.signals-more { margin-top: 40px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr)); gap: 20px clamp(24px, 4vw, 48px); }
+.signals-more div { padding-top: 20px; border-top: 1px solid var(--line); }
+.signals-more dt { color: var(--text); font-size: 1.0625rem; font-weight: 600; margin-bottom: 4px; }
+.signals-more dd { font-size: 0.9375rem; max-width: 62ch; }
+.example-note { margin-top: 20px; font-size: 0.8125rem; color: var(--text-muted); }
 
 /* ── How it works ────────────────────────────────── */
-.steps { margin-top: 56px; display: grid; gap: clamp(56px, 8vw, 88px); }
-.step { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: clamp(28px, 5vw, 72px); align-items: start; }
-.step h3 { font-family: var(--serif); font-size: 2rem; font-weight: 400; margin-bottom: 12px; }
+/* Seven stages: one line of steps with status captions. */
+.stages { margin-top: var(--lede-to-content); }
+.stage-row { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px 0; }
+.stage-group { display: flex; flex-direction: column; gap: 8px; }
+.stage-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 0; }
+.stage {
+  display: inline-flex; align-items: center; min-height: 2rem; padding: 0 12px;
+  font-size: 0.9375rem; font-weight: 500; line-height: 1.2; color: var(--text); white-space: nowrap;
+  background: var(--bg-raised); border: 1px solid var(--line-strong); border-radius: 999px;
+}
+.stage.dst { background: transparent; border-style: dashed; color: var(--text-body); font-weight: 400; }
+.stage-join { display: flex; align-items: center; height: 2rem; padding: 0 6px; color: var(--text-muted); flex: none; }
+.stage-cap { font: 400 var(--mono-label) var(--mono); letter-spacing: 0.02em; color: var(--cap); padding-top: 8px; border-top: 1px solid var(--cap); white-space: nowrap; }
+.g-stable { --cap: var(--held); }
+.g-running { --cap: var(--frost-2); }
+.g-propose { --cap: var(--warn); }
+.stage-branch { display: flex; align-items: center; gap: 6px; color: var(--warn); }
+.stage-note { width: 0; min-width: 100%; font-size: 0.8125rem; line-height: 1.45; color: var(--text-muted); }
+
+.steps { margin-top: 64px; display: grid; gap: clamp(56px, 8vw, 88px); }
+.step { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: clamp(28px, 5vw, 72px); align-items: start; }
+.step h3 { font-family: var(--serif); font-size: clamp(1.5rem, 2.4vw, 2rem); line-height: 1.1; font-weight: 400; margin-bottom: 12px; }
 .step p + p { margin-top: 0.9em; }
 pre.code {
   background: var(--bg-sunk); border: 1px solid var(--line); border-radius: 12px;
-  padding: 20px 22px; overflow-x: auto; color: var(--code); font-size: 0.82rem; line-height: 1.7;
+  padding: 20px 24px; overflow-x: auto; color: var(--code); font-size: var(--mono-code); line-height: 1.7;
   tab-size: 2;
 }
 pre.code + .file { margin-top: 20px; }
@@ -234,83 +308,95 @@ pre.code .s { color: var(--held); }
 pre.code .n { color: var(--purple); }
 pre.code .c { color: var(--text-muted); }
 pre.code .p { color: var(--text-muted); user-select: none; }
-.file { display: block; font: 400 0.78rem var(--mono); color: var(--text-muted); margin-bottom: 8px; }
-.more-link { display: inline-block; margin-top: 12px; font-size: 0.9rem; }
+.file { display: block; font: 400 var(--mono-data) var(--mono); color: var(--text-muted); margin-bottom: 8px; overflow-wrap: anywhere; }
+.more-link { display: inline-block; margin-top: 12px; font-size: 0.9375rem; }
 
 /* Runtime tiers */
 .tiers + .file { margin-top: 20px; }
 .tiers { list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .tiers li.side { grid-column: 1 / -1; }
 .tiers .node { height: 100%; }
-.tiers .node code { background: none; border: 0; padding: 0; color: var(--frost); font-size: 0.86rem; font-weight: 500; }
-.tiers .tier-label { display: block; font: 400 0.72rem var(--mono); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+.tiers .node code { background: none; border: 0; padding: 0; color: var(--frost); font-size: var(--mono-data); font-weight: 500; overflow-wrap: anywhere; }
+.tiers .tier-label { display: block; font: 400 var(--mono-label) var(--mono); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
 .tiers .side .node { border-style: dashed; }
 
 /* ── Diagram (shared node + arrow parts) ─────────── */
 .diagram { background: var(--bg-sunk); border: 1px solid var(--line); border-radius: 14px; padding: clamp(20px, 3.5vw, 40px); }
 .node {
   background: var(--bg-raised); border: 1px solid var(--line-strong); border-radius: 10px;
-  padding: 12px 16px; color: var(--text); font-weight: 500; font-size: 0.95rem; line-height: 1.4;
+  padding: 12px 16px; color: var(--text); font-weight: 500; font-size: 0.9375rem; line-height: 1.4;
 }
-.node span { display: block; font-weight: 400; font-size: 0.82rem; color: var(--text-muted); margin-top: 2px; }
+.node span:not(.nw) { display: block; font-weight: 400; font-size: 0.8125rem; color: var(--text-muted); margin-top: 2px; }
 .node.nth { border-color: var(--frost); box-shadow: 0 0 0 4px rgba(136, 192, 208, 0.08); }
 .node.nth b { color: var(--frost); font-weight: 600; }
 .node.out { border-color: rgba(235, 203, 139, 0.5); }
 .node.dst { border-style: dashed; }
-.arrow { display: flex; align-items: center; gap: 10px; font: 400 0.78rem var(--mono); color: var(--text-muted); }
-.arrow.down { padding: 6px 0 6px 20px; }
+.arrow { display: flex; align-items: center; gap: 10px; font: 400 var(--mono-data) var(--mono); color: var(--text-muted); }
+.arrow.down, .arrow.up { padding: 6px 0 6px 20px; }
 .arrow svg { flex: none; color: var(--text-muted); }
-.arrow.tone-out, .arrow.tone-out svg { color: var(--overridden); }
+.arrow.tone-out, .arrow.tone-out svg { color: var(--warn); }
+.arrow.tone-in, .arrow.tone-in svg { color: var(--frost-2); }
+.arrow-pair { display: flex; flex-wrap: wrap; gap: 0 24px; }
+.flow { container: flow / inline-size; }
 
 /* Where it sits: can a machine say no? */
-.sits-a { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: 0; margin-top: 48px; }
+.sits-a { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: 0; margin-top: var(--lede-to-content); }
 .sits-a .q { grid-column: 1 / -1; font-family: var(--serif); font-size: clamp(1.5rem, 2.6vw, 2rem); color: var(--text); margin-bottom: 20px; line-height: 1.15; }
 .sits-a .col { padding: 20px 0 4px; border-top: 1px solid var(--line-strong); }
 .sits-a .col + .col { padding-left: clamp(20px, 3.5vw, 40px); border-left: 1px solid var(--line-strong); }
 .sits-a .col:first-of-type { padding-right: clamp(20px, 3.5vw, 40px); }
-.sits-a .ans { font: 500 0.82rem var(--mono); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; }
+.sits-a .ans { font: 500 var(--mono-label) var(--mono); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 16px; }
 .sits-a .ans.yes { color: var(--held); }
 .sits-a .ans.no { color: var(--frost); }
 .checks { list-style: none; display: flex; flex-wrap: wrap; gap: 8px 16px; margin-bottom: 16px; }
-.checks li { font-size: 0.92rem; color: var(--text-body); }
-.checks li::before { content: "✓"; color: var(--held); margin-right: 6px; }
-.sits-a .verdict-line { font-size: 0.92rem; color: var(--text-muted); }
+.checks li { font-size: 0.9375rem; color: var(--text-body); display: inline-flex; align-items: center; gap: 6px; }
+.checks svg { flex: none; color: var(--held); }
+.sits-a .verdict-line { font-size: 0.9375rem; color: var(--text-muted); }
 .sits-a .verdict-line strong { color: var(--held); font-weight: 500; }
 .flow-mid { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 0; }
 .arrow.left { padding: 0 10px; flex-direction: column; gap: 4px; }
 
 .sits-notes { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(32px, 5vw, 64px); margin-top: 40px; align-items: start; }
-.sits-notes h3 { margin-bottom: 14px; }
-.needs { padding-left: 1.4em; display: grid; gap: 10px; font-size: 0.95rem; }
+.sits-notes h3 { margin-bottom: 16px; }
+.needs { padding-left: 1.4em; display: grid; gap: 12px; font-size: 0.9375rem; }
 .needs li::marker { color: var(--frost); font-family: var(--mono); font-size: 0.85em; }
 .needs strong { color: var(--text); font-weight: 600; }
-.sits-asides { list-style: none; display: grid; gap: 18px; }
-.sits-asides li { padding-top: 16px; border-top: 1px solid var(--line); font-size: 0.95rem; }
-.sits-asides strong { display: block; color: var(--text); font-weight: 600; margin-bottom: 4px; }
+.sits-asides { list-style: none; display: grid; gap: 20px; }
+.sits-asides li { padding-top: 16px; border-top: 1px solid var(--line); font-size: 0.9375rem; }
+.sits-asides strong { display: block; color: var(--text); font-size: 1.0625rem; font-weight: 600; margin-bottom: 4px; }
 
 /* ── Status ──────────────────────────────────────── */
-.status { list-style: none; margin-top: 36px; border-top: 1px solid var(--line-strong); }
-.status li { display: grid; grid-template-columns: minmax(0, 15rem) 8rem minmax(0, 1fr); gap: 4px 20px; align-items: baseline; padding: 14px 0; border-bottom: 1px solid var(--line); font-size: 0.95rem; }
-.status a { font-family: var(--mono); font-size: 0.88rem; }
-.tag { justify-self: start; font: 500 0.74rem var(--mono); text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; }
+.status { container: status / inline-size; list-style: none; margin-top: var(--lede-to-content); border-top: 1px solid var(--line-strong); }
+.status li { display: grid; grid-template-columns: minmax(0, 15rem) 8rem minmax(0, 1fr); gap: 4px 20px; align-items: baseline; padding: 16px 0; border-bottom: 1px solid var(--line); font-size: 0.9375rem; }
+.status a { font-family: var(--mono); font-size: var(--mono-data); overflow-wrap: anywhere; }
+.status .note { max-width: 62ch; }
+.status .note code { white-space: nowrap; }
+/* Two rows per repo when the list is narrow; in em, so larger text collapses it too. */
+@container status (max-width: 44em) {
+  .status li { grid-template-columns: minmax(0, 1fr) auto; }
+  .status li .note { grid-column: 1 / -1; color: var(--text-muted); font-size: 0.875rem; }
+  .status a { display: inline-block; padding: 4px 0; }
+}
+.tag { justify-self: start; font: 500 var(--mono-label) var(--mono); text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
 .tag.stable { color: var(--held); }
 .tag.impl { color: var(--frost); }
-.tag.early { color: var(--overridden); }
+.tag.usable { color: var(--text-body); border-color: var(--line-strong); }
+.tag.early { color: var(--warn); }
 
 /* ── Start ───────────────────────────────────────── */
-.start-main { margin-top: 32px; display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: clamp(32px, 6vw, 80px); align-items: start; }
-.start-main .install { margin-bottom: 14px; }
+.start-main { margin-top: var(--lede-to-content); display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: clamp(32px, 6vw, 80px); align-items: start; }
+.start-main .install { margin-bottom: 16px; }
 .start-main details { margin-top: 20px; }
 .start-main summary { cursor: pointer; color: var(--frost); font-weight: 500; }
 .start-main summary:hover { color: var(--text); }
-.start-main details pre { margin-top: 14px; }
+.start-main details pre { margin-top: 16px; }
 .paths { list-style: none; display: grid; gap: 0; }
-.paths li { padding: 14px 0; border-top: 1px solid var(--line); }
+.paths li { padding: 16px 0; border-top: 1px solid var(--line); }
 .paths li:last-child { border-bottom: 1px solid var(--line); }
-.paths strong { display: block; color: var(--text); font-weight: 600; margin-bottom: 2px; }
+.paths strong { display: block; color: var(--text); font-size: 1.0625rem; font-weight: 600; margin-bottom: 4px; }
 
 /* ── Footer ──────────────────────────────────────── */
-footer { border-top: 1px solid var(--line); padding: 40px 0 56px; font-size: 0.9rem; color: var(--text-muted); }
+footer { border-top: 1px solid var(--line); padding: 40px 0 56px; font-size: 0.9375rem; color: var(--text-muted); }
 footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px 32px; }
 footer ul { list-style: none; display: flex; flex-wrap: wrap; gap: 4px 24px; }
 footer a { display: inline-block; padding: 6px 0; color: var(--text-body); text-decoration: none; }
@@ -321,57 +407,70 @@ footer a:hover { color: var(--text); }
   .tiers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .tiers li.side { grid-column: auto; }
 }
+@media (max-width: 1024px) {
+  .step { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+}
 @media (max-width: 900px) {
-  .thesis .wrap, .sre-grid, .step, .start-main { grid-template-columns: minmax(0, 1fr); }
+  .thesis .wrap, .sre-grid, .start-main { grid-template-columns: minmax(0, 1fr); }
   .sits-a { grid-template-columns: minmax(0, 1fr); }
   .sits-a .col + .col { padding-left: 0; border-left: 0; }
   .sits-a .col:first-of-type { padding-right: 0; padding-bottom: 20px; }
-  .gauges, .signals-more { grid-template-columns: minmax(0, 1fr); }
-  .signals-more div + div { margin-top: 18px; }
-  .scenario-note { margin-left: 0; }
 
-  /* Ledger becomes stacked rows. Header row stays for screen readers; roles keep table semantics. */
-  .ledger thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-  .ledger table, .ledger tbody, .ledger tr, .ledger td { display: block; }
-  .ledger tbody tr { padding: 14px 18px; border-top: 1px solid var(--line); display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; }
-  .ledger td { padding: 0; border: 0; }
-  .ledger td.t { grid-column: 1; }
-  .ledger td.who { grid-column: 2; }
-  .ledger td.what { grid-column: 1 / -1; }
-  .ledger td.c { grid-column: 1; }
-  .ledger td.c::before { content: attr(data-label) " "; }
-  .ledger td.v { grid-column: 2; }
-  .ledger-head, .ledger-foot { padding-left: 18px; padding-right: 18px; }
-}
-@media (max-width: 760px) {
-  body { font-size: 16px; }
   .nav-links { display: none; }
   .nav-menu { display: block; position: relative; }
-  .nav-menu summary { list-style: none; cursor: pointer; color: var(--text); border: 1px solid var(--line-strong); border-radius: 8px; padding: 0 16px; min-height: 44px; display: flex; align-items: center; font-size: 0.94rem; }
+  .nav-menu summary { list-style: none; cursor: pointer; color: var(--text); border: 1px solid var(--line-strong); border-radius: 8px; padding: 0 16px; min-height: 44px; display: flex; align-items: center; font-size: 0.9375rem; }
   .nav-menu summary::-webkit-details-marker { display: none; }
   .nav-menu ul { list-style: none; position: absolute; right: 0; top: calc(100% + 8px); background: var(--bg-raised); border: 1px solid var(--line-strong); border-radius: 10px; padding: 8px; min-width: 200px; box-shadow: 0 16px 40px -12px rgba(0,0,0,0.7); }
-  .nav-menu li a { display: block; padding: 10px 12px; color: var(--text); text-decoration: none; border-radius: 6px; }
+  .nav-menu li a { display: flex; align-items: center; min-height: 44px; padding: 0 12px; color: var(--text); text-decoration: none; border-radius: 6px; }
   .nav-menu li a:hover { background: var(--line); }
-  .node { padding: 10px 12px; font-size: 0.88rem; }
-  .node span { font-size: 0.8rem; }
+}
+@media (max-width: 760px) {
+  body { font-size: 1rem; }
+  .lede { font-size: 1.125rem; }
+  .node { padding: 10px 12px; font-size: 0.875rem; }
+  .node span:not(.nw) { font-size: 0.8125rem; }
   .arrow.left { padding: 0 6px; }
   .arrow.left svg { width: 20px; }
-  .diagram { padding: 18px 14px; }
+  .diagram { padding: 20px 14px; }
   .sits-notes { grid-template-columns: minmax(0, 1fr); }
   .tiers { grid-template-columns: minmax(0, 1fr); }
-  .status li { grid-template-columns: auto 1fr; }
-  .status li .note { grid-column: 1 / -1; color: var(--text-muted); font-size: 0.9rem; }
-  .status a { display: inline-block; padding: 4px 0; }
-  .install { width: 100%; font-size: 0.8rem; gap: 10px; padding-left: 14px; }
+  .install { width: 100%; gap: 8px; padding-left: 14px; }
   .install code { flex: 1; min-width: 0; }
   .copy { min-height: 40px; }
+}
+@media (max-width: 600px) {
+  /* Timeline: time above the body, rail at the left edge. */
+  .timeline li { display: block; padding-left: 24px; }
+  .timeline li::after { left: 4px; top: 14px; }
+  .timeline time { display: block; padding: 0 0 2px; }
+  .timeline .body { position: static; padding-left: 0; }
+  .timeline .body::before { left: 0; top: 7px; }
+  .scenario-note { margin-left: 24px; }
 
-  .timeline li { grid-template-columns: 52px minmax(0, 1fr); gap: 14px; }
-  .timeline li::after { left: 66px; }
+  .stage-row { flex-direction: column; gap: 0; }
+  .stage-join { height: 28px; padding: 0 0 0 16px; }
+  .stage-join.between svg { transform: rotate(90deg); }
+  .stage-group { width: 100%; }
+  .stage-cap { align-self: flex-start; }
 }
 @media (max-width: 360px) {
-  .install { font-size: 0.72rem; padding-left: 10px; gap: 8px; }
+  .install { font-size: 0.8rem; padding-left: 12px; gap: 8px; }
   .install .prompt { display: none; }
+}
+
+/* Narrow column (small screens or large text): stack the overrides under NthLayer, outcomes pointing up. */
+@container flow (max-width: 19em) {
+  .flow-mid { grid-template-columns: minmax(0, 1fr); }
+  .arrow.left { flex-direction: row; justify-content: flex-start; padding: 6px 0 6px 20px; gap: 10px; }
+  .arrow.left svg { width: 28px; transform: rotate(90deg); }
+}
+
+/* Touch: every small link or control gets a 44px target. */
+@media (pointer: coarse) {
+  .textlink, .demo-link, .more-link, .status a, footer a { display: inline-flex; align-items: center; min-height: 44px; }
+  .start-main summary { display: flex; align-items: center; min-height: 44px; }
+  .copy { min-height: 44px; }
+  .nav-links a { display: inline-flex; align-items: center; min-height: 44px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -386,14 +485,14 @@ footer a:hover { color: var(--text); }
 <header class="nav">
   <div class="wrap">
     <a class="brand" href="/" aria-label="NthLayer home">
-      <img src="/logo.jpg" alt="" width="28" height="28">
+      <img src="/logo-56.png" alt="" width="28" height="28">
       NthLayer
     </a>
     <nav aria-label="Primary">
       <ul class="nav-links">
         <li><a href="#sre">AI SRE</a></li>
         <li><a href="#how">How it works</a></li>
-        <li><a href="/demo">Demo</a></li>
+        <li><a href="/walkthrough/">Walkthrough</a></li>
         <li><a href="/research">Research</a></li>
         <li><a class="gh" href="https://github.com/rsionnach/nthlayer">GitHub</a></li>
       </ul>
@@ -402,7 +501,7 @@ footer a:hover { color: var(--text); }
         <ul>
           <li><a href="#sre">AI SRE</a></li>
           <li><a href="#how">How it works</a></li>
-          <li><a href="/demo">Demo</a></li>
+          <li><a href="/walkthrough/">Walkthrough</a></li>
           <li><a href="/research">Research</a></li>
           <li><a href="https://github.com/rsionnach/nthlayer">GitHub</a></li>
         </ul>
@@ -424,60 +523,62 @@ footer a:hover { color: var(--text); }
       <div class="install">
         <span class="prompt" aria-hidden="true">$</span>
         <code id="install-cmd">pip install nthlayer-generate</code>
-        <button class="copy" type="button" data-copy="install-cmd" aria-label="Copy install command">Copy</button>
+        <button class="copy" type="button" data-copy="install-cmd" aria-label="Copy install command" hidden>Copy</button>
       </div>
-      <a class="textlink" href="#sre">Measure your AI SRE →</a>
+      <a class="textlink" href="#sre">See how it measures an AI SRE →</a>
     </div>
     <p class="sr-only" role="status" aria-live="polite" id="copy-status"></p>
 
-    <figure class="ledger" aria-labelledby="ledger-cap">
+    <figure class="ledger" id="ledger" aria-labelledby="ledger-cap">
       <div class="ledger-head">
-        <span id="ledger-cap"><strong>Verdicts</strong> · last hour · example data</span>
-        <span class="rate up" id="rate">reversal rate, 7d: <b id="rate-val">3.1%</b> <span aria-hidden="true">/</span> target ≤ 5%</span>
+        <span id="ledger-cap"><strong>Verdicts</strong> · recent · <span class="nw">example data</span></span>
+        <span class="rate">AI SRE reversal rate, 7d: <b class="rate-num"><span class="r-pre" aria-hidden="true">8.5%</span><span class="r-post">9.0%</span></b> <span class="nw"><span aria-hidden="true">/</span> target ≤ 5%</span></span>
       </div>
+      <div class="ledger-scroll">
       <table role="table">
         <thead role="rowgroup">
-          <tr role="row"><th role="columnheader" scope="col">Time</th><th role="columnheader" scope="col">Decided by</th><th role="columnheader" scope="col">Decision</th><th role="columnheader" scope="col">Confidence</th><th role="columnheader" scope="col">Outcome</th></tr>
+          <tr role="row"><th role="columnheader" scope="col" class="t">Decided</th><th role="columnheader" scope="col">Decided by</th><th role="columnheader" scope="col">Decision</th><th role="columnheader" scope="col" class="c">Confidence</th><th role="columnheader" scope="col">Outcome</th></tr>
         </thead>
         <tbody role="rowgroup">
-          <tr role="row" class="row-live settled" id="live-row">
-            <td role="cell" class="t">02:14</td>
-            <td role="cell" class="who">triage-agent<span>AI SRE</span></td>
-            <td role="cell" class="what">Marked <code>checkout-api 5xx</code> alert as noise and suppressed it</td>
-            <td role="cell" class="c" data-label="conf">0.92</td>
-            <td role="cell" class="v"><span class="verdict v-overridden" id="live-verdict">overridden<small>by on-call, in Slack</small></span></td>
+          <tr role="row" id="live-row">
+            <td role="cell" class="t">Today 02:14</td>
+            <td role="cell" class="who">ai-sre<span>AI SRE</span></td>
+            <td role="cell" class="what">Marked the <code>fraud-detect</code> p99 latency alert as noise and suppressed it</td>
+            <td role="cell" class="c" data-label="confidence">0.92</td>
+            <td role="cell" class="v"><span class="verdict v-overridden" id="live-verdict"><span class="lbls"><span class="lbl-pending" aria-hidden="true">pending</span><span class="lbl-settled">overridden</span></span><small>by on-call, in Slack</small></span></td>
           </tr>
           <tr role="row">
-            <td role="cell" class="t">02:09</td>
+            <td role="cell" class="t">Today 02:16</td>
+            <td role="cell" class="who">nthlayer-respond<span>remediation</span></td>
+            <td role="cell" class="what">Proposed rollback of <code>fraud-detect</code> to model v2.2 (needs human approval)</td>
+            <td role="cell" class="c" data-label="confidence">0.74</td>
+            <td role="cell" class="v"><span class="verdict v-pending">pending<small>outcome pending; not counted in the AI SRE’s rate</small></span></td>
+          </tr>
+          <tr role="row">
+            <td role="cell" class="t">Yesterday</td>
             <td role="cell" class="who">release-gate<span>rule engine</span></td>
             <td role="cell" class="what">Approved deploy <code>payments v4.12</code></td>
-            <td role="cell" class="c" data-label="conf">—</td>
+            <td role="cell" class="c" data-label="confidence">—</td>
             <td role="cell" class="v"><span class="verdict v-confirmed">confirmed</span></td>
           </tr>
           <tr role="row">
-            <td role="cell" class="t">01:58</td>
+            <td role="cell" class="t">Oct 26</td>
             <td role="cell" class="who">refund-approver<span>model</span></td>
             <td role="cell" class="what">Approved refund for order #88213</td>
-            <td role="cell" class="c" data-label="conf">0.67</td>
+            <td role="cell" class="c" data-label="confidence">0.67</td>
             <td role="cell" class="v"><span class="verdict v-overridden">overridden<small>by a reviewer, in Jira</small></span></td>
           </tr>
           <tr role="row">
-            <td role="cell" class="t">01:52</td>
-            <td role="cell" class="who">cleanup-agent<span>model</span></td>
-            <td role="cell" class="what">Deleted 412 stale preview environments</td>
-            <td role="cell" class="c" data-label="conf">0.88</td>
-            <td role="cell" class="v"><span class="verdict v-partial">partial<small>owners restored 3</small></span></td>
-          </tr>
-          <tr role="row">
-            <td role="cell" class="t">01:47</td>
+            <td role="cell" class="t">Oct 21</td>
             <td role="cell" class="who">a.murphy<span>human approver</span></td>
             <td role="cell" class="what">Approved schema migration <code>orders_v7</code></td>
-            <td role="cell" class="c" data-label="conf">—</td>
-            <td role="cell" class="v"><span class="verdict v-expired">expired<small>no outcome within 24h</small></span></td>
+            <td role="cell" class="c" data-label="confidence">—</td>
+            <td role="cell" class="v"><span class="verdict v-expired">expired<small>no outcome within 7 days</small></span></td>
           </tr>
         </tbody>
       </table>
-      <figcaption class="ledger-foot">Each row is a verdict: NthLayer’s record of one decision. The decision is written once; its outcome is settled once, later.</figcaption>
+      </div>
+      <figcaption class="ledger-foot"><span>Each row is a verdict: NthLayer’s record of one decision. The decision is written once; its outcome is settled once, later.</span></figcaption>
     </figure>
   </div>
 </section>
@@ -487,7 +588,7 @@ footer a:hover { color: var(--text); }
     <h2 id="thesis-h">Back pressure for decisions that have <em>no compiler.</em></h2>
     <div class="prose">
       <p>Pipelines scale by turning judgment into verification. A type checker, a test suite or a simulator says no, and the loop moves on.</p>
-      <p>Whatever can’t be verified that way is still a decision: a release, a migration, a destructive API call, an incident triage. Most systems never measure whether those decisions hold up. NthLayer does, and shows how much of your system still runs on judgment.</p>
+      <p>Whatever can’t be verified that way is still a decision: a release, a migration, a destructive API call, an alert triage. Most systems never measure whether those decisions hold up. NthLayer does, and shows how much of your system still runs on judgment.</p>
     </div>
   </div>
 </section>
@@ -503,37 +604,37 @@ footer a:hover { color: var(--text); }
     <div class="sre-grid">
       <div class="prose">
         <p class="lede">In operations, the evidence shows up on its own. The alert was real or it wasn’t. The service recovered or it didn’t. And the on-call who sees it is already the reviewer.</p>
-        <p>So every decision an AI SRE makes (to triage, suppress or remediate) is recorded, and settled when someone on the team overrides it where they already work. When its decisions stop holding up, its judgment SLO breaches, and the manifest can declare what happens next: reduce its autonomy.</p>
-        <a class="demo-link" href="/demo">Open the topology demo →</a>
+        <p>So every decision an AI SRE makes (to triage, suppress or remediate) is recorded, then settled: confirmed when a positive outcome is posted, overridden when someone on the team rejects it where they already work. When its decisions stop holding up, its judgment SLO (a target for how often they hold up) breaches, and the manifest’s declared breach action, <code>reduce_autonomy</code>, tells your AI SRE’s platform to rein it in.</p>
+        <a class="demo-link" href="/walkthrough/">Walk through the full scenario →</a>
       </div>
       <div>
         <ol class="timeline">
           <li style="--dot: var(--frost-2)">
             <time>02:14</time>
             <div class="body">
-              <p>The triage agent (the first row in the log above) marks a <strong>checkout-api 5xx</strong> alert as noise and suppresses it. Confidence 0.92.</p>
-              <span class="effect">verdict recorded, outcome pending</span>
+              <p>The AI SRE marks the <strong>fraud-detect p99 latency</strong> alert as noise and suppresses it. Confidence 0.92.</p>
+              <span class="effect">verdict recorded</span>
             </div>
           </li>
-          <li style="--dot: var(--overridden)">
+          <li style="--dot: var(--warn)">
             <time>02:31</time>
             <div class="body">
-              <p>The error-budget burn rate on checkout-api passes 10×. An incident is opened.</p>
+              <p>Error-budget burn rate on fraud-detect passes 10×. NthLayer’s workers group the breach into a situation and open a case.</p>
               <span class="effect">evidence arrives</span>
             </div>
           </li>
-          <li style="--dot: var(--reversed)">
+          <li style="--dot: var(--bad)">
             <time>02:33</time>
             <div class="body">
-              <p>The on-call rejects the suppression in Slack. The override adapter binds it to the 02:14 verdict, which is settled as <strong>overridden</strong>. A confident decision that was overridden counts as a high-confidence failure.</p>
+              <p>The on-call rejects the suppression in Slack. The override adapter binds it to the 02:14 verdict by decision ID, and its outcome settles as <strong>overridden</strong>. A confident decision that’s overridden counts as a high-confidence failure.</p>
               <span class="effect">high_confidence_failure above target</span>
             </div>
           </li>
           <li style="--dot: var(--purple)">
             <time>02:34</time>
             <div class="body">
-              <p>The agent breaches its judgment SLO (a target for how often its decisions hold up) and the alert fires. The manifest’s declared breach action is to reduce its autonomy: it can still propose suppressions, but a human approves each one.</p>
-              <span class="effect">reduce_autonomy</span>
+              <p>Over the week, overrides push the AI SRE’s reversal rate to 9.0% against a 5% target. The judgment SLO breaches, its alert fires in Alertmanager, and the manifest’s declared breach action, <code>reduce_autonomy</code>, is dispatched by your AI SRE’s platform. NthLayer executes nothing.</p>
+              <span class="effect">reduce_autonomy declared</span>
             </div>
           </li>
         </ol>
@@ -550,18 +651,18 @@ footer a:hover { color: var(--text); }
     <ul class="gauges">
       <li class="gauge">
         <h3>Reversal rate</h3>
-        <p>How often is a decision overturned? Today: the share of decisions overridden by a human. The spec also counts reconsideration by the service and downstream feedback.</p>
-        <div class="meter" role="img" aria-label="Example: 3.1% against a target of at most 5%, within target">
-          <div class="meter-track"><div class="meter-fill" style="width: 31%"></div><div class="meter-target"></div></div>
-          <div class="meter-read"><span>7d <b>3.1%</b></span><span>target ≤ 5%</span></div>
+        <p>How often is a decision overturned? Today: overrides ÷ decisions, from Prometheus counters exposed by your AI SRE (via its shim) and the override adapter. The spec also counts reconsideration by the service and downstream feedback.</p>
+        <div class="meter" role="img" aria-label="Example: 9.0% over 7 days against a target of at most 5%, over target">
+          <div class="meter-track"><div class="meter-fill over" style="width: 90%"></div><div class="meter-target"></div></div>
+          <div class="meter-read"><span>7d <b class="over">9.0%</b></span><span class="nw">target ≤ 5%</span></div>
         </div>
       </li>
       <li class="gauge">
         <h3>High-confidence failure rate</h3>
         <p>How often is a high-confidence decision wrong? Those are the decisions that skip the review that would have caught them.</p>
-        <div class="meter" role="img" aria-label="Example: 2.6% against a target of at most 2%, over target">
+        <div class="meter" role="img" aria-label="Example: 2.6% over 30 days against a target of at most 2%, over target">
           <div class="meter-track"><div class="meter-fill over" style="width: 65%"></div><div class="meter-target"></div></div>
-          <div class="meter-read"><span>30d <b class="over">2.6%</b></span><span>target ≤ 2%</span></div>
+          <div class="meter-read"><span>30d <b class="over">2.6%</b></span><span class="nw">target ≤ 2%</span></div>
         </div>
       </li>
       <li class="gauge">
@@ -569,14 +670,14 @@ footer a:hover { color: var(--text); }
         <p>When the service says it is 80% confident, is it right 80% of the time?</p>
         <div class="meter" role="img" aria-label="Example: calibration error 0.021 against a bound of at most 0.03, within bound">
           <div class="meter-track"><div class="meter-fill" style="width: 35%"></div><div class="meter-target"></div></div>
-          <div class="meter-read"><span>error <b>0.021</b></span><span>bound ≤ 0.03</span></div>
+          <div class="meter-read"><span>error <b>0.021</b></span><span class="nw">bound ≤ 0.03</span></div>
         </div>
       </li>
     </ul>
     <dl class="signals-more">
       <div>
         <dt>Override rate</dt>
-        <dd>How often does a human step in, and is that rising or falling?</dd>
+        <dd>How often does a human step in on any decision, right or wrong, and is that rising or falling?</dd>
       </div>
       <div>
         <dt>Feedback latency</dt>
@@ -587,7 +688,7 @@ footer a:hover { color: var(--text); }
         <dd>Does quality hold across customer tiers (segments) and model updates (stability), and is anyone still sampling decisions for review (audit backlog)?</dd>
       </div>
     </dl>
-    <p class="example-note">Values shown are example data, matching the scenario above.</p>
+    <p class="example-note">Values shown are example data from the walkthrough scenario.</p>
   </div>
 </section>
 
@@ -601,6 +702,33 @@ footer a:hover { color: var(--text); }
     <h2 id="how-h">How it works</h2>
     <p class="lede">Declare what “right” means, compile it into the monitoring you already run, then record decisions against it.</p>
 
+    <div class="stages">
+      <p class="sr-only">NthLayer works in seven stages. Define (the OpenSRM manifest) and Generate (nthlayer-generate) happen at build time and are stable. Observe, Measure, Correlate and Learn run at runtime. Respond also runs at runtime but only proposes: it records what it would do and opens a case, and a human acts on your systems.</p>
+      <div class="stage-row" aria-hidden="true">
+        <div class="stage-group g-stable">
+          <div class="stage-chips"><span class="stage" title="The OpenSRM manifest">Define</span><span class="stage-join"><svg width="16" height="8" viewBox="0 0 16 8"><path d="M0 4 H11" stroke="currentColor" stroke-width="1"/><path d="M11 0.5 L16 4 L11 7.5 Z" fill="currentColor"/></svg></span><span class="stage" title="nthlayer-generate">Generate</span></div>
+          <span class="stage-cap">build time · stable</span>
+        </div>
+        <span class="stage-join between"><svg width="16" height="8" viewBox="0 0 16 8"><path d="M0 4 H11" stroke="currentColor" stroke-width="1"/><path d="M11 0.5 L16 4 L11 7.5 Z" fill="currentColor"/></svg></span>
+        <div class="stage-group g-running">
+          <div class="stage-chips"><span class="stage">Observe</span><span class="stage-join"><svg width="16" height="8" viewBox="0 0 16 8"><path d="M0 4 H11" stroke="currentColor" stroke-width="1"/><path d="M11 0.5 L16 4 L11 7.5 Z" fill="currentColor"/></svg></span><span class="stage">Measure</span><span class="stage-join"><svg width="16" height="8" viewBox="0 0 16 8"><path d="M0 4 H11" stroke="currentColor" stroke-width="1"/><path d="M11 0.5 L16 4 L11 7.5 Z" fill="currentColor"/></svg></span><span class="stage">Correlate</span></div>
+          <span class="stage-cap">runtime · running</span>
+        </div>
+        <span class="stage-join between"><svg width="16" height="8" viewBox="0 0 16 8"><path d="M0 4 H11" stroke="currentColor" stroke-width="1"/><path d="M11 0.5 L16 4 L11 7.5 Z" fill="currentColor"/></svg></span>
+        <div class="stage-group g-propose">
+          <div class="stage-chips"><span class="stage">Respond</span></div>
+          <span class="stage-cap">runtime · proposes only</span>
+          <div class="stage-branch"><svg width="24" height="8" viewBox="0 0 24 8"><path d="M0 4 H19" stroke="currentColor" stroke-width="1" stroke-dasharray="3 3"/><path d="M19 0.5 L24 4 L19 7.5 Z" fill="currentColor"/></svg><span class="stage dst">your systems</span></div>
+          <p class="stage-note">records what it would do and opens a case; a human acts</p>
+        </div>
+        <span class="stage-join between"><svg width="16" height="8" viewBox="0 0 16 8"><path d="M0 4 H11" stroke="currentColor" stroke-width="1"/><path d="M11 0.5 L16 4 L11 7.5 Z" fill="currentColor"/></svg></span>
+        <div class="stage-group g-running">
+          <div class="stage-chips"><span class="stage">Learn</span></div>
+          <span class="stage-cap">runtime · running</span>
+        </div>
+      </div>
+    </div>
+
     <div class="steps">
       <div class="step">
         <div class="prose">
@@ -611,13 +739,13 @@ footer a:hover { color: var(--text); }
         <div>
           <span class="file">service.yaml (excerpt)</span>
 <pre class="code" tabindex="0" role="region" aria-label="Example manifest excerpt"><code><span class="k">spec:</span>
-  <span class="k">service:</span> { <span class="k">name:</span> <span class="s">triage-agent</span>, <span class="k">type:</span> <span class="s">ai-gate</span> }
+  <span class="k">service:</span> { <span class="k">name:</span> <span class="s">ai-sre</span>, <span class="k">type:</span> <span class="s">ai-gate</span> }
   <span class="k">judgment_slo:</span>
-    - <span class="k">service:</span> <span class="s">triage-agent</span>
+    - <span class="k">service:</span> <span class="s">ai-sre</span>
       <span class="k">judgment_type:</span> <span class="s">reversal_rate</span>
       <span class="k">measurement:</span> { <span class="k">window:</span> <span class="s">7d</span>, <span class="k">source:</span> <span class="s">lineage</span> }
       <span class="k">target:</span> { <span class="k">maximum_reversal_rate:</span> <span class="n">0.05</span> }
-    - <span class="k">service:</span> <span class="s">triage-agent</span>
+    - <span class="k">service:</span> <span class="s">ai-sre</span>
       <span class="k">judgment_type:</span> <span class="s">high_confidence_failure</span>
       <span class="k">measurement:</span> { <span class="k">confidence_threshold:</span> <span class="n">0.9</span>, <span class="k">window:</span> <span class="s">30d</span> }
       <span class="k">target:</span> { <span class="k">maximum_failure_rate:</span> <span class="n">0.02</span> }</code></pre>
@@ -628,7 +756,7 @@ footer a:hover { color: var(--text); }
       <div class="step">
         <div class="prose">
           <h3>Compile</h3>
-          <p><code>nthlayer apply</code> turns the manifest into Prometheus recording rules, dashboards, docs, Backstage entities and two kinds of alert: breach, and not-evaluable. A not-evaluable alert fires when a bound can’t be measured at all, so it is reported rather than treated as healthy. It is deterministic and needs no runtime.</p>
+          <p><code>nthlayer apply</code> turns the manifest into Prometheus recording rules, dashboards, docs, Backstage entities and two kinds of alert: breach, and not-evaluable. A not-evaluable alert fires when a bound can’t be measured at all, so it is reported rather than treated as healthy. <code>nthlayer apply</code> is deterministic and needs no runtime.</p>
           <p>The same step runs in CI through the GitHub Action, so a judgment SLO without a data source fails the build before it fails in production.</p>
         </div>
         <div>
@@ -650,20 +778,24 @@ footer a:hover { color: var(--text); }
         <div>
           <ul class="tiers">
             <li><div class="node"><span class="tier-label">Tier 1</span><code>nthlayer-core</code><span>Verdict store, case management and the API.</span></div></li>
-            <li><div class="node"><span class="tier-label">Tier 2</span><code>nthlayer-workers</code><span>Evaluates SLOs and judgment SLOs, groups related events into situations before anyone has called it an incident, coordinates response, resolves outcomes.</span></div></li>
+            <li><div class="node"><span class="tier-label">Tier 2</span><code>nthlayer-workers</code><span>Five runtime modules: observe and measure your SLOs and judgment SLOs against Prometheus, correlate related events into situations, respond by proposing actions for a human to approve and run, and learn by resolving outcomes and proposing manifest changes for human review.</span></div></li>
             <li><div class="node"><span class="tier-label">Tier 3</span><code>nthlayer-bench</code><span>Terminal UI for the moments that need a human. Reads as prose, not graphs.</span></div></li>
-            <li class="side"><div class="node"><span class="tier-label">Adapter</span><code>nthlayer-override-adapter</code><span>Ingests human overrides from wherever reviewers already work (Jira, Slack, a review UI, a webhook) and binds each one to the verdict it overturns.</span></div></li>
+            <li class="side"><div class="node"><span class="tier-label">Adapter</span><code>nthlayer-override-adapter</code><span>Ingests human overrides from Slack, Jira, a review UI or anything that can send a webhook, and binds each one to its verdict by decision ID.</span></div></li>
           </ul>
           <span class="file">POST /verdicts (example)</span>
 <pre class="code" tabindex="0" role="region" aria-label="Example verdict request"><code>{
-  <span class="k">"producer":</span> <span class="s">"triage-agent"</span>,
-  <span class="k">"subject":</span> <span class="s">"checkout-api 5xx alert"</span>,
+  <span class="k">"id":</span> <span class="s">"ai-sre-0412-a1"</span>,
+  <span class="k">"service":</span> <span class="s">"ai-sre"</span>,
+  <span class="k">"created_at":</span> <span class="s">"2026-10-28T02:14:00Z"</span>,
+  <span class="k">"producer":</span> { <span class="k">"system":</span> <span class="s">"ai-sre"</span> },
+  <span class="k">"subject":</span> { <span class="k">"type":</span> <span class="s">"triage"</span>, <span class="k">"ref":</span> <span class="s">"fraud-detect"</span> },
   <span class="k">"judgment":</span> {
-    <span class="k">"action":</span> <span class="s">"suppress"</span>,
+    <span class="k">"action":</span> <span class="s">"custom"</span>,
     <span class="k">"confidence":</span> <span class="n">0.92</span>,
-    <span class="k">"reasoning":</span> <span class="s">"matches a known flapping pattern"</span>
+    <span class="k">"reasoning":</span> <span class="s">"suppress: matches a known flapping pattern"</span>
   },
-  <span class="k">"lineage":</span> <span class="c">{ … }</span>
+  <span class="k">"outcome":</span> { <span class="k">"status":</span> <span class="s">"pending"</span> },
+  <span class="k">"metadata":</span> { <span class="k">"custom":</span> { <span class="k">"vendor_action":</span> <span class="s">"suppress_alert"</span>, <span class="k">"alert":</span> <span class="s">"fraud-detect p99 latency"</span> } }
 }</code></pre>
         </div>
       </div>
@@ -680,22 +812,31 @@ footer a:hover { color: var(--text); }
       <p class="q" id="sits-q">Can a machine say no before it ships?</p>
       <div class="col">
         <p class="ans yes">Yes</p>
-        <ul class="checks"><li>Compilers</li><li>Type checkers</li><li>Test suites</li><li>Simulators</li><li>Offline evals</li></ul>
+        <ul class="checks">
+          <li><svg width="12" height="10" viewBox="0 0 12 10" aria-hidden="true"><path d="M1 5.5 L4.5 9 L11 1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Compilers</li>
+          <li><svg width="12" height="10" viewBox="0 0 12 10" aria-hidden="true"><path d="M1 5.5 L4.5 9 L11 1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Type checkers</li>
+          <li><svg width="12" height="10" viewBox="0 0 12 10" aria-hidden="true"><path d="M1 5.5 L4.5 9 L11 1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Test suites</li>
+          <li><svg width="12" height="10" viewBox="0 0 12 10" aria-hidden="true"><path d="M1 5.5 L4.5 9 L11 1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Simulators</li>
+          <li><svg width="12" height="10" viewBox="0 0 12 10" aria-hidden="true"><path d="M1 5.5 L4.5 9 L11 1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Offline evals</li>
+        </ul>
         <p class="verdict-line"><strong>Use them.</strong> They catch it before production.</p>
       </div>
       <div class="col">
         <p class="ans no">No: everything else</p>
-        <p class="sr-only">Your AI SRE, rule engines and human approvers post decisions to NthLayer over HTTP. Human overrides from Slack, Jira or a webhook feed outcomes back into NthLayer. NthLayer sends recording rules and alerts to Prometheus, Alertmanager and Grafana, the stack you already run.</p>
-        <div aria-hidden="true">
-          <div class="node">Your AI SRE · rule engines · human approvers<span>triage, suppress, approve, release</span></div>
+        <p class="sr-only">Your AI SRE, rule engines and human approvers post decisions to NthLayer over HTTP. Human overrides from Slack, Jira or a webhook feed outcomes back into NthLayer. NthLayer sends recording rules and alerts to Prometheus, Alertmanager and Grafana, the stack you already run, and reads SLO series back from Prometheus.</p>
+        <div class="flow" aria-hidden="true">
+          <div class="node"><span class="nw">Your AI SRE ·</span> <span class="nw">rule engines ·</span> <span class="nw">human approvers</span><span>triage, suppress, approve, release</span></div>
           <div class="arrow down"><svg width="9" height="40" viewBox="0 0 9 40"><path d="M4.5 0 V34" stroke="currentColor" stroke-width="1"/><path d="M0 34 L4.5 40 L9 34" fill="currentColor"/></svg> decisions, over HTTP</div>
           <div class="flow-mid">
             <div class="node nth"><b>NthLayer</b><span>verdict store · judgment SLOs</span></div>
             <div class="arrow left tone-out"><svg width="28" height="9" viewBox="0 0 28 9"><path d="M28 4.5 H6" stroke="currentColor" stroke-width="1"/><path d="M6 0 L0 4.5 L6 9" fill="currentColor"/></svg><span>outcomes</span></div>
-            <div class="node out">Human overrides<span>Slack · Jira · webhook</span></div>
+            <div class="node out">Human overrides<span><span class="nw">Slack ·</span> <span class="nw">Jira ·</span> <span class="nw">webhook</span></span></div>
           </div>
-          <div class="arrow down"><svg width="9" height="40" viewBox="0 0 9 40"><path d="M4.5 0 V34" stroke="currentColor" stroke-width="1"/><path d="M0 34 L4.5 40 L9 34" fill="currentColor"/></svg> recording rules, alerts</div>
-          <div class="node dst">Prometheus · Alertmanager · Grafana<span>the stack you already run</span></div>
+          <div class="arrow-pair">
+            <div class="arrow down"><svg width="9" height="40" viewBox="0 0 9 40"><path d="M4.5 0 V34" stroke="currentColor" stroke-width="1"/><path d="M0 34 L4.5 40 L9 34" fill="currentColor"/></svg> recording rules, alerts</div>
+            <div class="arrow up tone-in"><svg width="9" height="40" viewBox="0 0 9 40"><path d="M4.5 40 V6" stroke="currentColor" stroke-width="1"/><path d="M0 6 L4.5 0 L9 6" fill="currentColor"/></svg> reads SLO series</div>
+          </div>
+          <div class="node dst"><span class="nw">Prometheus ·</span> <span class="nw">Alertmanager ·</span> <span class="nw">Grafana</span><span>the stack you already run</span></div>
         </div>
       </div>
     </figure>
@@ -704,15 +845,16 @@ footer a:hover { color: var(--text); }
       <div>
         <h3>What NthLayer needs from your AI SRE</h3>
         <ol class="needs">
-          <li><strong>A stable decision ID</strong> for each triage or recommendation, and the action taken.</li>
+          <li><strong>A stable decision ID</strong> for every decision. It becomes the verdict’s <code>id</code>, so it must be unique across NthLayer; your shim (the small adapter between your AI SRE and NthLayer) prefixes it (for example <code>ai-sre-…</code>).</li>
+          <li><strong>The decision as one of NthLayer’s actions</strong>: approve, reject, flag, escalate, defer or custom. The vendor’s own action (“restart the container”) goes in the reasoning or metadata.</li>
           <li><strong>A confidence between 0 and 1.</strong> Without it, high-confidence failure and calibration can’t be measured.</li>
-          <li><strong>A way to post the verdict</strong>, or an output NthLayer can poll.</li>
-          <li><strong>The decision ID wherever a human can reject it</strong> (Slack, Jira, the vendor’s UI), so the override finds its verdict.</li>
-          <li><strong>Lineage, if it has it:</strong> which alert triggered the decision, and what followed.</li>
+          <li><strong>The decision ID wherever a human can reject it.</strong> The vendor never calls NthLayer: Slack, Jira or a review tool can post as they are, through a webhook with a field mapping. An override binds only while the verdict is pending, so it has to arrive before the outcome does.</li>
+          <li><strong>What happened next, as a verdict pointing back at the decision.</strong> This is how NthLayer learns a decision was right: with no downstream verdict it can never be confirmed, and it expires after seven days. The alert that triggered the decision goes in as context, not as a parent.</li>
+          <li><strong>Your shim’s part</strong>, not the vendor’s: post each verdict to core with the ai-gate’s service name, a subject type (triage, recommendation or remediation), the producer, a time-zoned <code>created_at</code> and a pending outcome, and emit the decision counters with a confidence bucket so the high-confidence failure rate can be computed.</li>
         </ol>
       </div>
       <ul class="sits-asides">
-        <li><strong>Not an AI SRE or agent framework.</strong>It doesn’t run your agents. It records what they decided and scores it against what happened.</li>
+        <li><strong>Not your AI SRE’s replacement.</strong>It doesn’t run your agents. Every decision, theirs or your vendor’s, is recorded and judged the same way. Its own response agents only propose; a human approves and runs.</li>
         <li><strong>Beyond operations.</strong>The same record works for any decision no test can check: refunds, cleanups, schema changes, releases.</li>
       </ul>
     </div>
@@ -733,9 +875,9 @@ footer a:hover { color: var(--text); }
       <li><a href="https://github.com/rsionnach/nthlayer-generate">nthlayer-generate</a><span class="tag stable">Stable</span><span class="note">CI-ready, in production use</span></li>
       <li><a href="https://github.com/rsionnach/nthlayer-common">nthlayer-common</a><span class="tag stable">Stable</span><span class="note">Vocabulary stable on the 5.x line</span></li>
       <li><a href="https://github.com/rsionnach/nthlayer-core">nthlayer-core</a><span class="tag impl">Implemented</span><span class="note">Running in evaluation deployments</span></li>
-      <li><a href="https://github.com/rsionnach/nthlayer-workers">nthlayer-workers</a><span class="tag impl">Implemented</span><span class="note">Under integration testing</span></li>
+      <li><a href="https://github.com/rsionnach/nthlayer-workers">nthlayer-workers</a><span class="tag impl">Implemented</span><span class="note">Implemented; respond proposes only (execution, notifications and escalation are not wired yet)</span></li>
       <li><a href="https://github.com/rsionnach/nthlayer-override-adapter">nthlayer-override-adapter</a><span class="tag early">Early</span><span class="note">HTTP, batch and webhook ingestion work</span></li>
-      <li><a href="https://github.com/rsionnach/nthlayer-bench">nthlayer-bench</a><span class="tag impl">Usable</span><span class="note">Against a running core</span></li>
+      <li><a href="https://github.com/rsionnach/nthlayer-bench">nthlayer-bench</a><span class="tag usable">Usable</span><span class="note">Against a running core</span></li>
     </ul>
   </div>
 </section>
@@ -749,7 +891,7 @@ footer a:hover { color: var(--text); }
         <div class="install">
           <span class="prompt" aria-hidden="true">$</span>
           <code id="install-cmd-2">pip install nthlayer-generate</code>
-          <button class="copy" type="button" data-copy="install-cmd-2" aria-label="Copy install command">Copy</button>
+          <button class="copy" type="button" data-copy="install-cmd-2" aria-label="Copy install command" hidden>Copy</button>
         </div>
         <pre class="code" tabindex="0" role="region" aria-label="First commands"><code><span class="p">$ </span>nthlayer init
 <span class="p">$ </span>nthlayer apply service.yaml</code></pre>
@@ -762,7 +904,7 @@ footer a:hover { color: var(--text); }
       </div>
       <ul class="paths">
         <li><strong>Evaluating the idea</strong>Read the <a href="https://github.com/rsionnach/opensrm">OpenSRM spec</a>, starting with the judgment SLO section.</li>
-        <li><strong>Seeing it work</strong>Open the <a href="/demo">topology demo</a>.</li>
+        <li><strong>Seeing it work</strong>Step through the <a href="/walkthrough/">AI SRE walkthrough</a>.</li>
         <li><strong>Standing up the runtime</strong>Follow the <a href="https://github.com/rsionnach/nthlayer-core/blob/main/docs/deploying.md">deployment tutorial</a> from install to a verdict round-tripping through a running server.</li>
         <li><strong>Why this matters</strong><a href="/research">Read the research on what today’s AI observability tools measure</a>, and what they miss.</li>
       </ul>
@@ -788,7 +930,8 @@ footer a:hover { color: var(--text); }
 </footer>
 
 <script>
-// Copy-to-clipboard. Announces the result; on failure, selects the text and says how to copy it.
+// Copy-to-clipboard. Buttons ship hidden so no-JS visitors never see a dead control.
+// Announces the result; on failure, selects the text and says how to copy it.
 (function () {
   var status = document.getElementById('copy-status');
   function announce(msg) { status.textContent = ''; setTimeout(function () { status.textContent = msg; }, 50); }
@@ -800,6 +943,7 @@ footer a:hover { color: var(--text); }
     sel.addRange(range);
   }
   document.querySelectorAll('[data-copy]').forEach(function (btn) {
+    btn.hidden = false;
     btn.addEventListener('click', function () {
       var target = document.getElementById(btn.dataset.copy);
       var reset = function () { btn.textContent = 'Copy'; btn.removeAttribute('data-done'); };
@@ -832,34 +976,19 @@ footer a:hover { color: var(--text); }
   document.addEventListener('click', function (e) { if (menu.open && !menu.contains(e.target)) menu.open = false; });
 })();
 
-// The one authored moment: the top verdict starts pending and settles as overridden.
-// The settled state is the HTML default, so no-JS and reduced-motion visitors see it directly.
+// The one authored moment. With .anim on <html> (set in <head> before paint), CSS holds the top
+// verdict pending; once the row is fully in view we wait, then add .settled and CSS runs the
+// sequence: dot fills, label crossfades, the rate ticks 8.5% to 9.0%, then the override note fades in.
+// No JS or reduced motion: no .anim, so the settled state shows directly.
 (function () {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (!document.documentElement.classList.contains('anim')) return;
+  var ledger = document.getElementById('ledger');
   var row = document.getElementById('live-row');
-  var verdict = document.getElementById('live-verdict');
-  var rate = document.getElementById('rate');
-  var rateVal = document.getElementById('rate-val');
-  if (!row || !verdict || !('IntersectionObserver' in window)) return;
-
-  var settled = verdict.innerHTML;
-  verdict.className = 'verdict v-pending';
-  verdict.innerHTML = 'pending<small>awaiting outcome</small>';
-  row.classList.remove('settled');
-  rate.classList.remove('up');
-  rateVal.textContent = '2.9%';
-
   var io = new IntersectionObserver(function (entries) {
     if (!entries[0].isIntersecting) return;
     io.disconnect();
-    setTimeout(function () {
-      verdict.className = 'verdict v-overridden';
-      verdict.innerHTML = settled;
-      row.classList.add('settled');
-      rate.classList.add('up');
-      rateVal.textContent = '3.1%';
-    }, 1600);
-  }, { threshold: 0.6 });
+    setTimeout(function () { ledger.classList.add('settled'); }, 2500);
+  }, { threshold: 0.9 });
   io.observe(row);
 })();
 </script>
