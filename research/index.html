@@ -129,8 +129,13 @@ p, li, figcaption, dd { text-wrap: pretty; }
   max-width: 19ch;
 }
 .hero h1 em { display: block; font-style: normal; color: var(--frost); }
-.dateline { max-width: 72ch; margin-top: 28px; font: 400 var(--mono-data)/1.6 var(--mono); color: var(--text-muted); }
-.dateline span { display: block; }
+.dateline { margin-top: 28px; font: 400 var(--mono-data)/1.6 var(--mono); color: var(--text-muted); }
+.scope { display: grid; grid-template-columns: max-content minmax(0, 60ch); gap: 8px 24px; margin-top: 16px; font: 400 0.9375rem/1.55 var(--sans); color: var(--text-body); }
+.scope dt { font-weight: 600; color: var(--text-lede); }
+@media (max-width: 40em) {
+  .scope { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .scope dd + dt { margin-top: 12px; }
+}
 
 /* ── Article layout: contents list inline, then a rail on wide screens ── */
 .layout { padding-bottom: var(--section-gap); }
@@ -348,11 +353,15 @@ footer a:hover { color: var(--text); }
   <div class="wrap">
     <h1 id="title">The AI reliability gap <em>almost nobody is measuring</em></h1>
     <p class="lede">In March 2026, every observability tool we reviewed monitored the mechanics of AI: latency, tokens, cost. None of them measured whether AI agents were making good decisions. By November, several vendors scored production responses with AI judges, but nothing we found checked an agent’s decisions against what later turned out to be true.</p>
-    <p class="dateline">
-      <span><time datetime="2026-03">Published March 2026</time> · Updated <time datetime="2026-11">November 2026</time> · Quotes checked against sources <time datetime="2026-11">November 2026</time></span>
-      <span>March review: 9 established observability vendors · 14 AI-specific startups · 6 governance platforms · open standards · analyst reports · conference talks</span>
-      <span>November update: a targeted re-check of announcements, documentation and standards, not a full re-review of the March product sets</span>
-    </p>
+    <p class="dateline"><time datetime="2026-03">Published March 2026</time> · Updated <time datetime="2026-11">November 2026</time></p>
+    <dl class="scope">
+      <dt>March review</dt>
+      <dd>9 established observability vendors, 14 AI-specific startups and 6 governance platforms, plus open standards, analyst reports and conference talks.</dd>
+      <dt>November update</dt>
+      <dd>A targeted re-check of announcements, documentation and standards. The March product sets were not re-reviewed in full.</dd>
+      <dt>Quotes</dt>
+      <dd>Checked against their sources in November 2026.</dd>
+    </dl>
   </div>
 </header>
 
