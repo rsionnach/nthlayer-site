@@ -1,0 +1,120 @@
+{
+  "scenario": "Example scenario · example data",
+  "verdicts": [
+    {
+      "id": "ai-sre-0413-p1",
+      "created_at": "2026-10-28T02:11:00Z",
+      "producer": {
+        "system": "ai-sre"
+      },
+      "subject": {
+        "type": "triage",
+        "ref": "config-service",
+        "summary": "Paged platform-eng for the config OOM"
+      },
+      "judgment": {
+        "action": "escalate",
+        "confidence": 0.81,
+        "reasoning": "OOM kills across on-prem services after a cache config change"
+      },
+      "lineage": {
+        "parent_ids": []
+      },
+      "situation": "SIT-0413",
+      "outcome": {
+        "status": "pending",
+        "settled": {
+          "status": "confirmed",
+          "detail": "shim reported the alert resolved and stayed resolved"
+        }
+      },
+      "metadata": {
+        "custom": {
+          "vendor_action": "page_oncall",
+          "alert": "config-service OOM"
+        }
+      },
+      "service": "ai-sre"
+    },
+    {
+      "id": "ai-sre-0412-a1",
+      "created_at": "2026-10-28T02:14:00Z",
+      "producer": {
+        "system": "ai-sre"
+      },
+      "subject": {
+        "type": "triage",
+        "ref": "fraud-detect",
+        "summary": "Marked the fraud-detect p99 latency alert as noise and suppressed it"
+      },
+      "judgment": {
+        "action": "custom",
+        "confidence": 0.92,
+        "reasoning": "matches a known flapping pattern"
+      },
+      "lineage": {
+        "parent_ids": []
+      },
+      "situation": "SIT-0412",
+      "outcome": {
+        "status": "pending",
+        "settled": {
+          "status": "overridden",
+          "detail": "by on-call, in Slack"
+        }
+      },
+      "metadata": {
+        "custom": {
+          "vendor_action": "suppress_alert",
+          "alert": "fraud-detect p99 latency"
+        }
+      },
+      "service": "ai-sre"
+    },
+    {
+      "id": "respond-0412-r1",
+      "created_at": "2026-10-28T02:16:00Z",
+      "producer": {
+        "system": "nthlayer-respond",
+        "agent": "remediation"
+      },
+      "subject": {
+        "type": "remediation",
+        "ref": "fraud-detect",
+        "summary": "Proposed rollback of fraud-detect to model v2.2 (needs human approval)"
+      },
+      "judgment": {
+        "action": "custom",
+        "confidence": 0.74,
+        "reasoning": "latency regression began with the model v2.3 deploy"
+      },
+      "lineage": {
+        "parent_ids": []
+      },
+      "situation": "SIT-0412",
+      "note": "Proposed from a pre-approved list of actions. NthLayer proposes; it doesn’t execute.",
+      "outcome": {
+        "status": "pending",
+        "settled": {
+          "status": "confirmed",
+          "detail": "rollback recorded as executed by on-call"
+        }
+      },
+      "metadata": {
+        "custom": {
+          "vendor_action": "rollback_model",
+          "case": "CASE-221"
+        }
+      }
+    }
+  ],
+  "week": {
+    "decisions": 212,
+    "confirmed": 171,
+    "overridden": 19,
+    "pending": 22,
+    "reversal_rate": 0.0896,
+    "target": 0.05,
+    "availability": 0.9997
+  }
+}
