@@ -172,7 +172,7 @@ p, li { text-wrap: pretty; }
 /* Story strip: one lit step per chapter, everything else dimmed. */
 /* The strip's left edge sits on the page gutter, in line with the narration and controls. */
 /* Capped at 1.1x the viewBox, so on big screens the spare width goes to the side panel rather than oversized labels. */
-.strip { position: absolute; top: 12px; bottom: 12px; left: calc(var(--gutter) - 1px); width: calc(100% - var(--gutter) - 8px); height: calc(100% - 24px); max-width: 1022px; max-height: 572px; margin: auto 0; display: block; }
+.strip { position: absolute; top: 12px; bottom: 12px; left: calc(var(--gutter) - 1px); width: calc(100% - 2 * var(--gutter)); height: calc(100% - 24px); max-width: 1022px; max-height: 572px; margin: auto 0; display: block; }
 @media (min-width: 1440px) { .stage-body { grid-template-columns: minmax(0, 1fr) clamp(300px, 30vw, 440px); } }
 .strip text { font-family: var(--sans); }
 /* Only shapes dim. Unlit text stays fully opaque in the muted colour so it keeps its contrast. */
@@ -357,7 +357,7 @@ footer a:hover { color: var(--text); }
   .stage-body { grid-template-columns: minmax(0, 1fr); }
   html { scroll-padding-bottom: var(--controls-h, 72px); }
   /* Full width, height from width (capped where the strip itself caps at 1.1x). */
-  .strip-wrap { height: min(calc((100vw - var(--gutter) - 8px) * 0.5597 + 24px), 596px); }
+  .strip-wrap { height: min(calc((100vw - 2 * var(--gutter)) * 0.5597 + 24px), 596px); }
   .intro { padding: 10px var(--gutter) 9px; }
   .intro h1 { font-size: 1.75rem; }
   .intro-lede { display: none; }
@@ -383,20 +383,22 @@ footer a:hover { color: var(--text); }
   .hud { text-align: left; padding-top: 2px; }
   .hud b { display: inline; margin-left: 6px; font-size: 1rem; }
 }
+/* Nav collapses to the menu at the same width as the homepage. */
+@media (max-width: 900px) {
+  .nav-links { display: none; }
+  .nav-menu { display: block; position: relative; }
+  .nav-menu summary { list-style: none; cursor: pointer; color: var(--text); border: 1px solid var(--line-strong); border-radius: 8px; padding: 0 16px; min-height: 44px; display: flex; align-items: center; font-size: 0.9375rem; }
+  .nav-menu summary::-webkit-details-marker { display: none; }
+  .nav-menu ul { list-style: none; position: absolute; right: 0; top: calc(100% + 8px); background: var(--bg-raised); border: 1px solid var(--line-strong); border-radius: 10px; padding: 8px; min-width: 200px; box-shadow: 0 16px 40px -12px rgba(0,0,0,0.7); }
+  .nav-menu li a { display: flex; align-items: center; min-height: 44px; padding: 0 12px; color: var(--text); text-decoration: none; border-radius: 6px; }
+  .nav-menu li a:hover, .nav-menu li a[aria-current="page"] { background: var(--line); }
+}
 @media (max-width: 760px) {
   body { font-size: 16px; }
   .walk { height: auto; min-height: 0; }
   .intro { padding-top: 24px; }
   .intro h1 { font-size: 2.1rem; }
-  .nav-links { display: none; }
-  .nav-menu { display: block; position: relative; }
   .brand { min-height: 44px; }
-  .nav-menu summary { list-style: none; cursor: pointer; color: var(--text); border: 1px solid var(--line-strong); border-radius: 8px; padding: 0 16px; min-height: 44px; display: flex; align-items: center; font-size: 0.9375rem; }
-  .nav-menu summary::-webkit-details-marker { display: none; }
-  .nav-menu ul { list-style: none; position: absolute; right: 0; top: calc(100% + 8px); background: var(--bg-raised); border: 1px solid var(--line-strong); border-radius: 10px; padding: 8px; min-width: 200px; box-shadow: 0 16px 40px -12px rgba(0,0,0,0.7); }
-  .nav-menu li a { display: block; padding: 10px 12px; color: var(--text); text-decoration: none; border-radius: 6px; }
-  .nav-menu li a:hover { background: var(--line); }
-  .nav-menu li a[aria-current="page"] { background: var(--line); }
 }
 
 @media (prefers-reduced-motion: reduce) {
