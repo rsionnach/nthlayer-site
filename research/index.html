@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The AI reliability gap · NthLayer research (March 2026)</title>
-<meta name="description" content="A March 2026 review of 9 established observability vendors, 14 AI-specific startups and 6 governance platforms, with practitioner and analyst quotes. None of the tools we reviewed measured AI decision quality as an SLO.">
+<title>The AI reliability gap · NthLayer research (March 2026, updated November 2026)</title>
+<meta name="description" content="A March 2026 review of 9 established observability vendors, 14 AI-specific startups and 6 governance platforms, updated November 2026. Vendors now score production responses with AI judges; none of the products we reviewed checked agent decisions against outcomes confirmed later.">
 <meta name="theme-color" content="#0B1120">
 <meta name="color-scheme" content="dark">
 <link rel="canonical" href="https://nthlayer.io/research/">
-<meta property="og:title" content="The AI reliability gap · NthLayer research (March 2026)">
-<meta property="og:description" content="NthLayer’s March 2026 review of observability vendors, AI startups, governance platforms and open standards: AI mechanics were monitored; decision quality, in the tools we reviewed, was not.">
+<meta property="og:title" content="The AI reliability gap · NthLayer research (March 2026, updated November 2026)">
+<meta property="og:description" content="NthLayer’s March 2026 review of observability vendors, AI startups, governance platforms and open standards, updated November 2026: production judge scores arrived; checking agent decisions against later outcomes, in the products we reviewed, did not.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://nthlayer.io/research/">
 <meta property="og:site_name" content="NthLayer">
@@ -18,9 +18,10 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="NthLayer research: The AI reliability gap (March 2026)">
 <meta property="article:published_time" content="2026-03">
+<meta property="article:modified_time" content="2026-11">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://nthlayer.io/og/research.png">
-<meta name="twitter:title" content="The AI reliability gap · NthLayer research (March 2026)">
+<meta name="twitter:title" content="The AI reliability gap · NthLayer research (March 2026, updated November 2026)">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
@@ -152,6 +153,14 @@ p, li, figcaption, dd { text-wrap: pretty; }
 
 .layout > section > h2 { scroll-margin-top: 80px; }
 
+/* ── November 2026 update: a dated panel set apart from the March snapshot ── */
+.update-panel { background: var(--bg-band); border: 1px solid var(--line); border-radius: 12px; padding: 40px 44px; }
+.update-panel h2 { scroll-margin-top: 80px; }
+.update-meta { margin: -4px 0 28px; max-width: 64ch; font: 400 var(--mono-data)/1.6 var(--mono); color: var(--text-muted); }
+.update-panel .prose { max-width: 56ch; }
+.update-panel .quote.solo { margin: 32px 0; }
+.update-panel .quote { grid-template-columns: 11rem minmax(0, 1fr); }
+
 /* ── Stats ───────────────────────────────────────── */
 .stats { list-style: none; display: grid; gap: 28px 40px; margin: 8px 0 0; }
 .stats-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 46rem; }
@@ -275,6 +284,7 @@ footer a:hover { color: var(--text); }
   .quote figcaption b { display: inline; }
   .quote figcaption .venue { margin-top: 2px; }
   .stats-3 { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .update-panel { padding: 28px 20px; }
 }
 @media (max-width: 40em) {
   .ctas { flex-direction: column; align-items: stretch; gap: 12px; }
@@ -337,10 +347,11 @@ footer a:hover { color: var(--text); }
 <header class="hero">
   <div class="wrap">
     <h1 id="title">The AI reliability gap <em>almost nobody is measuring</em></h1>
-    <p class="lede">Every observability tool we reviewed monitored the mechanics of AI: latency, tokens, cost. As of March 2026, none of them measured whether AI agents were making good decisions. Practitioners and analysts were describing the same gap from different directions.</p>
+    <p class="lede">In March 2026, every observability tool we reviewed monitored the mechanics of AI: latency, tokens, cost. None of them measured whether AI agents were making good decisions. By November, several vendors scored production responses with AI judges, but nothing we found checked an agent’s decisions against what later turned out to be true.</p>
     <p class="dateline">
-      <span><time datetime="2026-03">Published March 2026</time> · Quotes checked against sources <time datetime="2026-11">November 2026</time> · Market claims reflect March 2026</span>
-      <span>Reviewed: 9 established observability vendors · 14 AI-specific startups · 6 governance platforms · open standards · analyst reports · conference talks</span>
+      <span><time datetime="2026-03">Published March 2026</time> · Updated <time datetime="2026-11">November 2026</time> · Quotes checked against sources <time datetime="2026-11">November 2026</time></span>
+      <span>March review: 9 established observability vendors · 14 AI-specific startups · 6 governance platforms · open standards · analyst reports · conference talks</span>
+      <span>November update: a targeted re-check of announcements, documentation and standards, not a full re-review of the March product sets</span>
     </p>
   </div>
 </header>
@@ -351,6 +362,7 @@ footer a:hover { color: var(--text); }
   <h2 id="toc-h">Contents</h2>
   <ol>
     <li><a href="#numbers">The numbers</a></li>
+    <li><a href="#update">November 2026 update</a></li>
     <li><a href="#thesis">The thesis</a></li>
     <li><a href="#voices">What practitioners and analysts said</a></li>
     <li><a href="#vendors">What the vendors offered</a></li>
@@ -386,7 +398,60 @@ footer a:hover { color: var(--text); }
       <span class="stat-label">of agentic AI projects forecast to be cancelled by the end of 2027</span>
       <span class="stat-src">Gartner forecast, Jun 2025 <a class="cite" href="#src-3" aria-label="Source 3">[3]</a></span>
     </li>
+    <li class="stat">
+      <span class="stat-num">85%</span>
+      <span class="stat-label">of IT leaders were comfortable with AI investigating incidents</span>
+      <span class="stat-src">Grafana Labs, Oct 2026 (n=300) <a class="cite" href="#src-17" aria-label="Source 17">[17]</a></span>
+    </li>
+    <li class="stat">
+      <span class="stat-num">50%</span>
+      <span class="stat-label">were comfortable letting it deploy changes to production</span>
+      <span class="stat-src">Grafana Labs, Oct 2026 (n=300) <a class="cite" href="#src-17" aria-label="Source 17">[17]</a></span>
+    </li>
   </ul>
+</section>
+
+<section aria-labelledby="update">
+  <div class="update-panel">
+    <h2 id="update">November 2026 update</h2>
+    <p class="update-meta">Checked <time datetime="2026-11-02">2 November 2026</time> · A targeted re-check of announcements, documentation and standards, not a full re-review of the March product sets</p>
+    <div class="prose">
+      <p>The March finding holds, in a narrower form. Between March and November the market moved from <strong>mechanics</strong> to <strong>production judge scores</strong>: several large vendors now grade live responses with AI evaluators, which measures perceived quality at the moment of response. Nothing we found checks an agent’s decisions against outcomes confirmed later. In the products we reviewed, human override or reversal rates, confidence calibration, high-confidence failure rates and SLOs on decision quality are not documented features, and no open standard defines them.</p>
+
+      <h3>Vendors now score production responses</h3>
+      <p>Datadog launched Bits Evals in preview at DASH in June, alongside Patterns (also in preview), which clusters agent interactions and shows evaluation scores beside cost and latency. Its case for the product is this page’s thesis: production traces “do not always indicate whether the interaction was successful from the user’s perspective” <a class="cite" href="#src-18" aria-label="Source 18">[18]</a>. Splunk Agent Observability, “powered by Galileo”, became available in September; Splunk says teams can “observe 100% of traffic without the need for sampling” <a class="cite" href="#src-19" aria-label="Source 19">[19]</a>. Dynatrace’s evaluation preview scores real interactions with an LLM judge, with online evaluations that run “after deployment against sampled production or user traffic” <a class="cite" href="#src-20" aria-label="Source 20">[20]</a>.</p>
+
+      <h3>An AI SRE product now reports outcomes</h3>
+      <p>Microsoft’s Azure SRE Agent documentation (28 October 2026) describes a dashboard that sorts each incident into agent mitigated, assisted by agent, mitigated by user or pending user action, with a success rate for each response plan. After each thread completes, an automated evaluation “scores the outcome on a scale from 1 to 5”, reported as the Intent Met score <a class="cite" href="#src-21" aria-label="Source 21">[21]</a>. It is the closest thing to production outcome measurement we found, and its limits matter. The categories record who mitigated an incident, not whether the agent’s diagnosis was right. The score comes from an automated evaluation of the thread, not from the cause confirmed later. The documentation reports no override or reversal rate.</p>
+      <p>Elsewhere the measuring is left to the customer. AWS’s DevOps Agent launch post cites “94% root cause accuracy” reported by preview customers and partners, gives no method, and suggests customers track accuracy rates themselves <a class="cite" href="#src-22" aria-label="Source 22">[22]</a>.</p>
+
+      <h3>Independent benchmarks are far lower</h3>
+      <p>ITBench-AA, launched by Artificial Analysis and IBM in May 2026, tests models on Kubernetes root-cause tasks. At launch every frontier model scored below 50%; the leaderboard’s top score was 56.2% when we checked <a class="cite" href="#src-27" aria-label="Source 27">[27]</a>. On OpenRCA 2.0, 11 frontier LLMs recovered the exact root-cause set in 20.7% of cases on average. They named at least one correct root-cause service in 76.0% of cases, but grounded it in a verified causal path in only 61.5% <a class="cite" href="#src-28" aria-label="Source 28">[28]</a>. These are offline benchmarks, not production telemetry, but they show why a confident answer needs checking against what turns out to be true.</p>
+    </div>
+
+    <figure class="quote solo">
+      <blockquote><p>The failure mode is not silence, it is a plausible cause delivered with the same tone as a correct one.</p></blockquote>
+      <figcaption><b>Adam Frank</b> Writing for Rootly, an incident-management vendor <span class="venue">Rootly blog, Sep 2026 <a class="cite" href="#src-29" aria-label="Source 29">[29]</a></span></figcaption>
+      <p class="gloss">Assessing AI SRE agents, he adds that most teams that trial auto-remediation end up “gating it behind approval”.</p>
+    </figure>
+
+    <div class="prose">
+      <h3>Governance moved toward runtime</h3>
+      <p>In March 2026 Traceloop, whose platform ran quality checks such as faithfulness and relevance on real traffic, announced it was joining ServiceNow, with its technology becoming part of ServiceNow’s AI Control Tower <a class="cite" href="#src-23" aria-label="Source 23">[23]</a>. Governance is no longer only a gate before execution. What Traceloop brings is quality checks on live traffic, not confirmed outcomes.</p>
+
+      <h3>The startups were bought</h3>
+      <p>Much of the March startup category now belongs to larger companies. Cisco announced its intent to acquire Galileo on 9 April 2026 and completed the deal in May <a class="cite" href="#src-24" aria-label="Source 24">[24]</a>. Dynatrace completed its acquisition of Arize on 1 October 2026 <a class="cite" href="#src-25" aria-label="Source 25">[25]</a>. Promptfoo agreed to be acquired by OpenAI in March <a class="cite" href="#src-26" aria-label="Source 26">[26]</a>, and Traceloop is joining ServiceNow <a class="cite" href="#src-23" aria-label="Source 23">[23]</a>. Evaluation is merging into the big observability and governance platforms. In what we checked, it still means judge scores and annotations, not outcomes.</p>
+
+      <h3>Standards added agent structure, not judgement</h3>
+      <p>In OpenTelemetry semantic conventions v1.42.0 (12 June 2026), all <code>gen_ai.*</code> conventions were deprecated in the core repository and moved to a dedicated <code>semantic-conventions-genai</code> repository, which had no tagged release when we checked. Its evaluation event, <code>gen_ai.evaluation.result</code>, still carries a name, a score or label and an explanation, as it did in v1.38.0 <a class="cite" href="#src-30" aria-label="Source 30">[30]</a> <a class="cite" href="#src-12" aria-label="Source 12">[12]</a>.</p>
+      <p>Arize’s OpenInference conventions added annotations in July 2026 that record whether a human, an LLM or code judged a span, trace or session. That is the nearest thing to a standard human-judgement signal, but it is still a generic score or label, with no notion of an override or of an outcome confirmed later. Its <code>DECISION</code> span kind, added in October, describes calls to decision-model APIs (models that choose among fixed answers), not the quality of an agent’s decisions <a class="cite" href="#src-31" aria-label="Source 31">[31]</a>.</p>
+      <p>The SLO tooling is unchanged on this point. OpenSLO’s 2026 commits were documentation and website work, the 2026 releases of Sloth and Pyrra add nothing for AI decision quality, and Google SLO Generator has not released since February 2024 <a class="cite" href="#src-14" aria-label="Source 14">[14]</a> <a class="cite" href="#src-15" aria-label="Source 15">[15]</a>. NIST’s AI 800-4 report (March 2026) says monitoring “best practices, validated methodologies, and common terminology are still nascent and scattered across the field” <a class="cite" href="#src-32" aria-label="Source 32">[32]</a>.</p>
+
+      <h3>What this update did not cover</h3>
+      <p>Absence here means not found in the announcements, documentation and blogs we checked in November; it is not the result of an exhaustive audit. We did not re-review the March product sets or the six governance platforms named below, could not retrieve ServiceNow’s own announcements, and did not check per-customer dashboards in other AI SRE products or several evaluation startups. Any of these could hold a counter-example.</p>
+      <p>The sections that follow are the March 2026 findings, kept as a dated snapshot and corrected where this check showed them to be wrong or too broad.</p>
+    </div>
+  </div>
 </section>
 
 <section aria-labelledby="thesis">
@@ -396,6 +461,7 @@ footer a:hover { color: var(--text); }
     <p>Almost nobody was asking the other question: <strong>are the AI agents themselves making good decisions?</strong></p>
     <p>This research examined 9 established observability vendors, 14 AI-specific startups, 6 governance platforms, the major open-source standards, analyst reports from Gartner and Forrester, and conference talks from SREcon, QCon and KubeCon. The finding was consistent: every tool we reviewed monitored the mechanics of AI (latency, tokens, cost, error rates), while decision quality (reversal rates, confidence calibration, high-confidence failure rates) remained unmeasured in production.</p>
     <p>The gap was not subtle, and people building and operating these systems were saying so in public.</p>
+    <p>By November 2026 the broad form of that finding no longer held: several vendors scored production responses with LLM judges (see the <a href="#update">November 2026 update</a>). Reversal rates, calibration and high-confidence failure rates remained unmeasured in the products we reviewed.</p>
   </div>
 </section>
 
@@ -435,7 +501,7 @@ footer a:hover { color: var(--text); }
     <figure class="quote">
       <blockquote><p>More than two-thirds of agentic AI decisions are currently verified by a human.</p></blockquote>
       <figcaption><b>Dynatrace</b> <cite>Pulse of Agentic AI 2026</cite> <span class="venue">Survey of 919 senior leaders and decision makers, Jan 2026 <a class="cite" href="#src-2" aria-label="Source 2">[2]</a></span></figcaption>
-      <p class="gloss">The report puts that figure at 69%. It also lists “Limited visibility into how agents make or execute decisions” (41%) among the technical barriers to production, and finds that only 13% of organisations are building solely autonomous agents.</p>
+      <p class="gloss">The report puts that figure at 69%. It also lists “Limited visibility into how agents make or execute decisions” (41%, report PDF, p. 13) among the technical barriers to production. According to the press release, only 13% of organisations “use fully autonomous agents”.</p>
     </figure>
   </div>
 </section>
@@ -444,6 +510,7 @@ footer a:hover { color: var(--text); }
   <h2 id="vendors">What the vendors offered</h2>
   <div class="prose">
     <p>A cross-vendor analysis showed near-total convergence. <strong>Every vendor we reviewed tracked the same AI metrics: latency, token usage, costs, error rates, and prompt/response traces.</strong> Several added hallucination detection and toxicity scanning. None of those we reviewed measured decision quality as an SLO with error budgets.</p>
+    <p>The table records March 2026. By November, Datadog, Splunk and Dynatrace had added LLM-judge scoring of production traffic, which moves established vendors towards “Yes” for quality scoring and to a partial answer on post-execution quality. No category had added override or reversal rates or confidence calibration as documented features. See the <a href="#update">November 2026 update</a>.</p>
   </div>
 
   <div class="matrix-wrap">
@@ -517,38 +584,39 @@ footer a:hover { color: var(--text); }
     <p>Every established vendor we reviewed was primarily investing in AI for Ops: using AI to help humans investigate incidents faster. Almost nobody was building Ops for AI: measuring whether AI systems themselves are reliable.</p>
 
     <h3>Governance vs. reliability</h3>
-    <p>The AI agent governance platforms we reviewed (Microsoft Agent Governance Toolkit, CortexHub, AControlLayer, Kore.ai, Acuvity, Aegis) focused exclusively on <strong>pre-execution authorisation</strong>: is this agent allowed to do this? None of them systematically measured <strong>post-execution decision quality</strong>: did this agent make a good decision?</p>
+    <p>In March 2026 the AI agent governance platforms we reviewed (Microsoft Agent Governance Toolkit, CortexHub, AControlLayer, Kore.ai, Acuvity, Aegis) focused on <strong>pre-execution authorisation</strong>: is this agent allowed to do this? None of them systematically measured <strong>post-execution decision quality</strong>: did this agent make a good decision? By November, governance had begun moving into runtime, with Traceloop’s production quality checks going into ServiceNow’s AI Control Tower <a class="cite" href="#src-23" aria-label="Source 23">[23]</a>. We did not re-check the six platforms above.</p>
     <p>JetBrains put it clearly: “Governance frameworks define permissions, approval gates, and high-level constraints. They rarely account for how an agent interprets context, chains tools, or explores edge cases while attempting to complete a task. The result is a structural gap.” <a class="cite" href="#src-10" aria-label="Source 10">[10]</a></p>
-    <p>The gap between governance and reliability is the space between the bouncer checking your ID at the door and the auditor reviewing whether the decisions made inside were sound. The industry had the bouncer. It didn’t have the auditor.</p>
+    <p>The gap between governance and reliability is the space between the bouncer checking your ID at the door and the auditor reviewing whether the decisions made inside were sound. The industry had the bouncer. It didn’t have the auditor. By November it had someone grading the answers as they were given, but still no one checking later whether they held up.</p>
   </div>
 </section>
 
 <section aria-labelledby="standards">
   <h2 id="standards">No open standard we found supported judgment SLOs</h2>
   <div class="prose">
-    <p>At the time of review, OpenTelemetry had merged evaluation event conventions (v1.38.0, October 2025) with attributes for generic evaluation scores <a class="cite" href="#src-13" aria-label="Source 13">[13]</a>. The agentic systems proposal (Issue #2664) covered tasks, actions, agents, teams, artifacts and memory, but <strong>no decision quality semantics</strong> <a class="cite" href="#src-14" aria-label="Source 14">[14]</a>: no <code>gen_ai.decision.*</code> or <code>gen_ai.override.*</code> attributes.</p>
-    <p>OpenSLO v1.0 supported traditional ratio-based SLIs. It had <strong>no concept of judgment quality</strong>, observation periods, confidence-weighted metrics or human override signals <a class="cite" href="#src-15" aria-label="Source 15">[15]</a>.</p>
-    <p>All three major SLO generators (Sloth, Pyrra, Google SLO Generator) produced Prometheus rules exclusively for availability and latency SLOs. <strong>None supported AI decision quality metrics</strong> <a class="cite" href="#src-16" aria-label="Source 16">[16]</a>.</p>
-    <p>OpenSRM (the open specification NthLayer is built on) was the only open specification we found, as of March 2026, that models AI decision quality as an SLO, with constructs for reversal rate, high-confidence failure rate above a <code>confidence_threshold</code>, calibration as a threshold, and measurement windows <a class="cite" href="#src-17" aria-label="Source 17">[17]</a>.</p>
+    <p>This section describes March 2026; the <a href="#update">November 2026 update</a> covers what has changed since, and none of it adds judgment SLOs.</p>
+    <p>At the time of review, OpenTelemetry had merged evaluation event conventions (v1.38.0, October 2025) with attributes for generic evaluation scores <a class="cite" href="#src-12" aria-label="Source 12">[12]</a>. The agentic systems proposal (Issue #2664) covered tasks, actions, agents, teams, artifacts and memory, but <strong>no decision quality semantics</strong> <a class="cite" href="#src-13" aria-label="Source 13">[13]</a>: no <code>gen_ai.decision.*</code> or <code>gen_ai.override.*</code> attributes.</p>
+    <p>OpenSLO v1.0 supported traditional ratio-based SLIs. It had <strong>no concept of judgment quality</strong>, observation periods, confidence-weighted metrics or human override signals <a class="cite" href="#src-14" aria-label="Source 14">[14]</a>.</p>
+    <p>All three major SLO generators (Sloth, Pyrra, Google SLO Generator) produced Prometheus rules exclusively for availability and latency SLOs. <strong>None supported AI decision quality metrics</strong> <a class="cite" href="#src-15" aria-label="Source 15">[15]</a>.</p>
+    <p>OpenSRM (the open specification NthLayer is built on) was the only open specification we found, as of March 2026, that models AI decision quality as an SLO, with constructs for reversal rate, high-confidence failure rate above a <code>confidence_threshold</code>, calibration as a threshold, and measurement windows <a class="cite" href="#src-16" aria-label="Source 16">[16]</a>.</p>
   </div>
 </section>
 
 <section aria-labelledby="compound">
   <h2 id="compound">Compound failure and the Jevons paradox</h2>
   <div class="prose">
-    <p>The Jevons paradox is the observation that when something becomes cheaper to use, people use more of it, so total consumption rises instead of falling. Applied to software: when code is cheaper to write, we write more of it, and complexity goes up. By early 2026 that argument had data behind it.</p>
+    <p>The Jevons paradox is the observation that when something becomes cheaper to use, people use more of it, so total consumption rises instead of falling. Applied to software: when code is cheaper to write, we write more of it, and complexity goes up. By 2026 that argument had data behind it.</p>
   </div>
 
   <ul class="stats stats-3">
     <li class="stat">
-      <span class="stat-num">56%</span>
-      <span class="stat-label">year-over-year increase in reported AI-related incidents (2024 vs 2023)</span>
-      <span class="stat-src">Stanford AI Index 2025 <a class="cite" href="#src-11" aria-label="Source 11">[11]</a></span>
+      <span class="stat-num">362</span>
+      <span class="stat-label">documented AI incidents in 2025, up from 233 in 2024 (a 55% rise, our calculation)</span>
+      <span class="stat-src">Stanford AI Index 2026 <a class="cite" href="#src-11" aria-label="Source 11">[11]</a></span>
     </li>
     <li class="stat">
-      <span class="stat-num">16%</span>
-      <span class="stat-label">year-over-year increase in incidents at enterprise companies</span>
-      <span class="stat-src">PagerDuty, Feb 2024 <a class="cite" href="#src-12" aria-label="Source 12">[12]</a></span>
+      <span class="stat-num">~1 in 3</span>
+      <span class="stat-label">attempts still failed for AI agents on structured benchmarks, after OSWorld task success rose from 12% to about 66%</span>
+      <span class="stat-src">Stanford AI Index 2026 <a class="cite" href="#src-11" aria-label="Source 11">[11]</a></span>
     </li>
     <li class="stat">
       <span class="stat-num">~20%</span>
@@ -559,6 +627,7 @@ footer a:hover { color: var(--text); }
 
   <div class="prose">
     <p>The compound failure math is unforgiving. An AI agent with 85% per-step accuracy succeeds only about 20% of the time on a 10-step task. As organisations run dozens or hundreds of agents that interact with each other and with traditional services, <strong>individual agent monitoring cannot detect compound failures</strong> that emerge from interactions between agents.</p>
+    <p>Independent benchmarks published since March give the illustration real numbers: on OpenRCA 2.0, frontier LLM agents recovered the exact root-cause set in 20.7% of cases <a class="cite" href="#src-28" aria-label="Source 28">[28]</a>.</p>
   </div>
 
   <figure class="quote solo">
@@ -571,14 +640,14 @@ footer a:hover { color: var(--text); }
 <section aria-labelledby="gap">
   <h2 id="gap">The structural gap</h2>
   <div class="prose">
-    <p>The research found a market that was simultaneously booming and structurally incomplete. Billions were flowing into observability tooling, and every major vendor had shipped an AI monitoring product. Yet the fundamental question, <strong>is this AI agent making good decisions?</strong>, was answered by no shipping product we reviewed.</p>
+    <p>The research found a market that was simultaneously booming and structurally incomplete. Billions were flowing into observability tooling, and every major vendor had shipped an AI monitoring product. Yet the fundamental question, <strong>is this AI agent making good decisions?</strong>, was answered by no shipping product we reviewed in March. By November, products scored responses as they were made and one AI SRE product reported who mitigated each incident, but none we found checked decisions against outcomes confirmed later.</p>
     <p>Three findings stood out:</p>
     <ol class="findings">
       <li>An engineer working on AI reliability at Anthropic said in a public talk that Claude repeatedly misread a lost cache as a capacity problem, and that a correction covers only that case: it “will get wrong correlation versus causation in the other 99 situations.” We found no shipping product that measured how often that kind of judgment turns out wrong.</li>
       <li>The LangChain survey, with 89% reporting observability while quality remained the #1 barrier, suggests the gap is not an observability gap in the traditional sense. It is a decision quality measurement gap.</li>
       <li>Discussing security attacks on AI agents, Gartner stated that “guardrails, security filters, human oversight, or even security observability are not sufficient to ensure consistently appropriate agent use.” In our reading, closing that gap takes something other than more of the same controls.</li>
     </ol>
-    <p>The gaps followed from architectural choices. Established vendors built around metrics, logs and traces for infrastructure. Startups built around SDK instrumentation for individual model evaluation. Governance platforms built around pre-execution policy gates.</p>
+    <p>The gaps followed from architectural choices. Established vendors built around metrics, logs and traces for infrastructure. Startups built around SDK instrumentation for individual model evaluation. Governance platforms built around pre-execution policy gates. The 2026 acquisitions folded several of the startups’ evaluation tools into the first and third groups; in what we checked, what they measure is still a judge score, not an outcome.</p>
   </div>
 </section>
 
@@ -591,7 +660,7 @@ footer a:hover { color: var(--text); }
       <li><strong>Judgment SLOs compile into the Prometheus and Grafana you run.</strong> Targets, measurement windows and breach actions are declared in an OpenSRM manifest. Today the reversal rate is overrides ÷ decisions, computed from Prometheus counters.</li>
       <li><strong>The flagship case: measuring a third-party AI SRE.</strong> Every triage, suppression or remediation it makes becomes a verdict, the on-call’s overrides settle them, and its reversal rate is held to a target.</li>
       <li><strong>NthLayer executes nothing.</strong> Its respond worker only proposes; a human approves and acts. When a judgment SLO breaches, <code>reduce_autonomy</code> is the breach action declared in the manifest, and your platform dispatches it.</li>
-      <li><strong>External to the agent.</strong> NthLayer doesn’t instrument the agent’s internals or ask the agent to grade itself. The manifest declares what reliable means; the measurement comes from outside the agent.</li>
+      <li><strong>External to the agent.</strong> NthLayer doesn’t instrument the agent’s internals or ask the agent to grade itself. The manifest declares what reliable means; the measurement comes from outside the agent. That is the difference from a score assigned automatically when a thread ends: a verdict settles on what happened afterwards.</li>
     </ul>
   </div>
   <div class="ctas">
@@ -614,15 +683,30 @@ footer a:hover { color: var(--text); }
     <li id="src-8">Niall Murphy, SREcon25 Americas, March 2025, as reported in Beth Pariseau, “SREs map uncharted territory with LLMOps”, TechTarget, 26 March 2025. <a href="https://www.techtarget.com/it-infrastructure/news/366621317/SREs-map-uncharted-territory-with-LLMOps">techtarget.com</a></li>
     <li id="src-9">Anton Baturan and Zichuan Xiong, “AI for Ops vs. Ops for AI”, Thoughtworks Insights, 27 November 2025. <a href="https://www.thoughtworks.com/insights/blog/generative-ai/ai-for-ops-vs-ops-for-AI">thoughtworks.com</a></li>
     <li id="src-10">Orit Golowinski, “Why Your AI Governance Is Holding You Back, and You Don’t Even Know It”, The JetBrains AI Blog, 19 March 2026. <a href="https://blog.jetbrains.com/ai/2026/03/why-your-ai-governance-is-holding-you-back-and-you-don-t-even-know-it/">blog.jetbrains.com</a></li>
-    <li id="src-11">Stanford HAI, <cite>The 2025 AI Index Report</cite>, “Responsible AI” chapter (233 reported AI-related incidents in 2024, up 56.4% on 2023, from the AI Incident Database), April 2025. <a href="https://hai.stanford.edu/ai-index/2025-ai-index-report/responsible-ai">hai.stanford.edu</a></li>
-    <li id="src-12">PagerDuty, 2024 State of Digital Operations study: “PagerDuty Study Finds 16% Increase in Enterprise Incidents Amid Race to AI Adoption”, Business Wire, 7 February 2024. <a href="https://www.businesswire.com/news/home/20240207764183/en/PagerDuty-Study-Finds-16-Increase-in-Enterprise-Incidents-Amid-Race-to-AI-Adoption">businesswire.com</a></li>
-    <li id="src-13">OpenTelemetry semantic conventions v1.38.0 release notes (introduces the GenAI Evaluation Event), 29 October 2025. <a href="https://github.com/open-telemetry/semantic-conventions/releases/tag/v1.38.0">github.com/open-telemetry/semantic-conventions</a></li>
-    <li id="src-14">“Semantic Conventions for Generative AI Agentic Systems (gen_ai.*)”, opened 20 August 2025 as semantic-conventions Issue #2664, since moved to semantic-conventions-genai Issue #35. <a href="https://github.com/open-telemetry/semantic-conventions-genai/issues/35">github.com/open-telemetry/semantic-conventions-genai</a></li>
-    <li id="src-15">OpenSLO specification, v1. <a href="https://github.com/OpenSLO/OpenSLO">github.com/OpenSLO/OpenSLO</a></li>
-    <li id="src-16">SLO generators reviewed: Sloth <a href="https://github.com/slok/sloth">github.com/slok/sloth</a> · Pyrra <a href="https://github.com/prometheus-community/pyrra">github.com/prometheus-community/pyrra</a> · Google SLO Generator <a href="https://github.com/google/slo-generator">github.com/google/slo-generator</a></li>
-    <li id="src-17">OpenSRM specification (core, v2), the open specification NthLayer is built on. <a href="https://github.com/rsionnach/opensrm">github.com/rsionnach/opensrm</a></li>
+    <li id="src-11">Stanford HAI, <cite>The 2026 AI Index Report</cite>, top takeaways (“Documented AI incidents rose to 362, up from 233 in 2024”; OSWorld task success from 12% to ~66%). The 55% rise is our calculation, not Stanford’s figure. Replaces the 2025 edition cited in March. <a href="https://hai.stanford.edu/ai-index/2026-ai-index-report">hai.stanford.edu</a></li>
+    <li id="src-12">OpenTelemetry semantic conventions v1.38.0 release notes (introduces the GenAI Evaluation Event), 29 October 2025. <a href="https://github.com/open-telemetry/semantic-conventions/releases/tag/v1.38.0">github.com/open-telemetry/semantic-conventions</a></li>
+    <li id="src-13">“Semantic Conventions for Generative AI Agentic Systems (gen_ai.*)”, opened 20 August 2025 as semantic-conventions Issue #2664, since moved to semantic-conventions-genai Issue #35. <a href="https://github.com/open-telemetry/semantic-conventions-genai/issues/35">github.com/open-telemetry/semantic-conventions-genai</a></li>
+    <li id="src-14">OpenSLO specification, v1. <a href="https://github.com/OpenSLO/OpenSLO">github.com/OpenSLO/OpenSLO</a> · checked November 2026: <a href="https://github.com/OpenSLO/OpenSLO/commits/main">commit history</a> (2026 commits are documentation and website work, September 2026)</li>
+    <li id="src-15">SLO generators reviewed: Sloth <a href="https://github.com/slok/sloth">github.com/slok/sloth</a> · Pyrra <a href="https://github.com/prometheus-community/pyrra">github.com/prometheus-community/pyrra</a> · Google SLO Generator <a href="https://github.com/google/slo-generator">github.com/google/slo-generator</a>. Checked November 2026: latest releases Sloth <a href="https://github.com/slok/sloth/releases/tag/v0.16.0">v0.16.0</a> (4 April 2026), Pyrra <a href="https://github.com/prometheus-community/pyrra/releases">v0.10.2</a> (18 September 2026), SLO Generator <a href="https://github.com/google/slo-generator/releases">v2.6.0</a> (19 February 2024).</li>
+    <li id="src-16">OpenSRM core specification (v2 draft), the open specification NthLayer is built on. Disclosure: NthLayer’s author maintains it; it is cited to describe what it models, not as evidence about the market. <a href="https://github.com/rsionnach/opensrm">github.com/rsionnach/opensrm</a></li>
+    <li id="src-17">Grafana Labs, “Survey: AI Adoption Is Outpacing Trust as Enterprises Push Toward Autonomous Operations”, press release on <cite>The 2026 State of Observability Report</cite> (ETR survey of 300 IT and engineering decision-makers, June 2026), 19 October 2026. <a href="https://grafana.com/press/2026/10/19/survey-ai-adoption-is-outpacing-trust-as-enterprises-push-toward-autonomous-operations/">grafana.com</a></li>
+    <li id="src-18">Datadog, “Improve AI agent quality with Bits Evals”, 9 June 2026. <a href="https://www.datadoghq.com/blog/bits-evals/">datadoghq.com</a> · “DASH 2026: Guide to Datadog’s newest announcements”, 9 June 2026. <a href="https://www.datadoghq.com/blog/dash-2026-new-feature-roundup-keynote/">datadoghq.com</a></li>
+    <li id="src-19">Dave Hickman, “Splunk Observability at .conf26: Optimize AI at Scale”, Splunk blog, 16 September 2026. <a href="https://www.splunk.com/en_us/blog/observability/splunk-observability-at-conf26-optimize-ai-at-scale.html">splunk.com</a></li>
+    <li id="src-20">Dynatrace, “Evaluate LLM and agent quality in Dynatrace AI Observability”, Dynatrace blog, 11 June 2026. <a href="https://www.dynatrace.com/news/blog/evaluate-llm-and-agent-quality-in-dynatrace-ai-observability/">dynatrace.com</a></li>
+    <li id="src-21">Microsoft Learn, “Track Incident Value in Azure SRE Agent”, 28 October 2026. <a href="https://learn.microsoft.com/en-us/azure/sre-agent/track-incident-value">learn.microsoft.com</a> · “Review agent insights in Azure SRE Agent”, 28 October 2026. <a href="https://learn.microsoft.com/en-us/azure/sre-agent/review-agent-insights">learn.microsoft.com</a></li>
+    <li id="src-22">AWS, “Announcing General Availability of AWS DevOps Agent”, AWS Cloud Operations Blog, 31 March 2026. <a href="https://aws.amazon.com/blogs/mt/announcing-general-availability-of-aws-devops-agent">aws.amazon.com</a></li>
+    <li id="src-23">Nir Gazit, “Traceloop is joining ServiceNow”, Traceloop blog, March 2026. <a href="https://traceloop.com/blog/traceloop-is-joining-servicenow">traceloop.com</a></li>
+    <li id="src-24">Kamal Hathi, “Making AI Trustworthy and Observable in Real-Time: Cisco Announces Intent to Acquire Galileo”, Cisco Blogs, 9 April 2026 (updated 22 May 2026: acquisition completed). <a href="https://blogs.cisco.com/news/cisco-announces-the-intent-to-acquire-galileo">blogs.cisco.com</a></li>
+    <li id="src-25">Steve Tack, “Dynatrace completes acquisition of Arize to advance full-lifecycle AI observability”, Dynatrace blog, 1 October 2026. <a href="https://www.dynatrace.com/news/blog/dynatrace-completes-acquisition-of-arize/">dynatrace.com</a></li>
+    <li id="src-26">Ian Webster and Michael D’Angelo, “Promptfoo is joining OpenAI”, Promptfoo blog, 9 March 2026. <a href="https://www.promptfoo.dev/blog/promptfoo-joining-openai/">promptfoo.dev</a></li>
+    <li id="src-27">Artificial Analysis, “ITBench-AA: Agentic benchmark to test models on real-world SRE tasks”, 27 May 2026. <a href="https://artificialanalysis.ai/articles/itbench-aa-launch">artificialanalysis.ai</a> · <a href="https://artificialanalysis.ai/evaluations/itbench-aa">Leaderboard</a>, checked 2 November 2026</li>
+    <li id="src-28">Aoyang Fang et al., “OpenRCA 2.0: From Outcome Labels to Causal Process Supervision”, arXiv:2606.27154, 25 June 2026 (revised 30 June 2026). <a href="https://arxiv.org/abs/2606.27154">arxiv.org</a></li>
+    <li id="src-29">Adam Frank, “Do AI SRE agents actually work? An honest capability assessment”, Rootly blog, 15 September 2026. <a href="https://rootly.com/blog/do-ai-sre-agents-actually-work">rootly.com</a></li>
+    <li id="src-30">OpenTelemetry semantic conventions v1.42.0 release notes (moves <code>gen_ai.*</code> to a dedicated repository), 12 June 2026. <a href="https://github.com/open-telemetry/semantic-conventions/releases/tag/v1.42.0">github.com/open-telemetry/semantic-conventions</a> · <a href="https://github.com/open-telemetry/semantic-conventions-genai">semantic-conventions-genai repository</a> (no tagged release, checked 2 November 2026) · <a href="https://github.com/open-telemetry/semantic-conventions-genai/blob/main/model/gen-ai/events.yaml">evaluation event definition</a></li>
+    <li id="src-31">OpenInference specification: “Annotations and Evaluations” (added 31 July 2026) <a href="https://github.com/Arize-ai/openinference/blob/main/spec/annotations.md">github.com/Arize-ai/openinference</a> · “Decision Spans” (added 1 October 2026) <a href="https://github.com/Arize-ai/openinference/blob/main/spec/decision_spans.md">github.com/Arize-ai/openinference</a></li>
+    <li id="src-32">Anita Rao et al., NIST AI 800-4, “Challenges to the monitoring of deployed AI systems”, Center for AI Standards and Innovation, NIST, 6 March 2026. <a href="https://www.nist.gov/publications/challenges-monitoring-deployed-ai-systems-center-ai-standards-and-innovation">nist.gov</a></li>
   </ol>
-  <p class="sources-note">Links were checked when this list was compiled. Some publishers block automated requests, so a link that fails in a script may still open in a browser.</p>
+  <p class="sources-note">Sources 17–32 were added in the November 2026 update, and source 11 replaced the 2025 Stanford report; the March PagerDuty 2024 figure was removed as out of date. Links were checked when this list was compiled. Some publishers block automated requests, so a link that fails in a script may still open in a browser.</p>
 </section>
 
 </div>
